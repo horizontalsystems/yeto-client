@@ -1,26 +1,44 @@
+'use client'
+
+import useSWR from 'swr'
 import Link from 'next/link'
 import { SearchInput } from '@/components/pool-search-input'
 import { Pair, PoolItem } from '@/components/pool-item'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 
-type Pool = {
+export type Pool = {
   name: string
   pairs: Pair[]
 }
 
-export async function PoolList({ query }: { query?: string }) {
-  let apiUrl = `${process.env.NEXT_SERVER_API_URL}/clmm-api/pair/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
+const fetchPools = async (query?: string) => {
+  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/clmm-api/pair/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
   if (query) {
     apiUrl += `&search_term=${encodeURIComponent(query)}`
   }
 
-  const res = await fetch(apiUrl)
+  const res = await fetch(apiUrl, { next: { revalidate: 60 } })
   if (!res.ok) {
-    return 'There was an error'
+    throw new Error('Failed to fetch pools')
   }
 
-  const pools: Pool[] = await res.json().then(r => r.groups)
+  const data = await res.json()
+  return data.groups as Pool[]
+}
+
+export function PoolList({ query }: { query?: string }) {
+  const {
+    data: pools,
+    error,
+    isLoading
+  } = useSWR(['pools', query], () => fetchPools(query), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false
+  })
+
+  if (error) return <p className="text-red-500">There was an error fetching pools.</p>
+  if (isLoading || !pools) return <p>Loading...</p>
 
   return (
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
