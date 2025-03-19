@@ -1,8 +1,14 @@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export function SelectCoin({ items, placeholder = 'Select' }: { items: string[]; placeholder?: string }) {
+type SelectProps = {
+  items: string[]
+  placeholder?: string
+  onChange: (value: number) => void
+}
+
+export function SelectNumber({ items, placeholder = 'Select', onChange }: SelectProps) {
   return (
-    <Select>
+    <Select onValueChange={(value: string) => onChange(parseFloat(value))}>
       <SelectTrigger className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

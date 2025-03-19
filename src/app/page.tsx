@@ -1,4 +1,4 @@
-import { PoolList } from '@/components/pool-list'
+import { PoolList } from '@/components/pool/pool-list'
 import { TvlChart } from '@/components/chart/tvl-chart'
 import { Button } from '@/components/ui/button'
 import { SwapVolumeChart } from '@/components/chart/swap-volume-chart'

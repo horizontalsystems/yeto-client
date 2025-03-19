@@ -51,7 +51,7 @@ export default async function Dlmm({ params }: { params: Promise<{ slug: string 
             <div className="text-foreground text-2xl uppercase">
               {base} / {quote}
             </div>
-            <Link href="/dlmm/pool-creation">
+            <Link href="/dlmm/create">
               <Button variant="light" className="cursor-pointer">
                 <Plus /> Add liquidity
               </Button>

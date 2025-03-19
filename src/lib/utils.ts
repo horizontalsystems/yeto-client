@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { PublicKey } from '@solana/web3.js'
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -29,4 +30,19 @@ export function toAmount(value: number | string) {
 
 export function toPercent(value: number | string) {
   return (typeof value === 'string' ? parseFloat(value) : value).toFixed(2) + '%'
+}
+
+export function u16ToBuffer(value: number): Buffer {
+  const buffer = Buffer.alloc(2)
+  buffer.writeUInt16LE(value, 0)
+  return buffer
+}
+
+export function derivePresetParameter(programId: PublicKey, binStep: number, baseFactor: number) {
+  const [publicKey] = PublicKey.findProgramAddressSync(
+    [Buffer.from('preset_parameter', 'utf8'), u16ToBuffer(binStep), u16ToBuffer(baseFactor)],
+    programId
+  )
+
+  return publicKey
 }

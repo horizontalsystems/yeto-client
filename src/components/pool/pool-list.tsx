@@ -2,8 +2,8 @@
 
 import useSWR from 'swr'
 import Link from 'next/link'
-import { SearchInput } from '@/components/pool-search-input'
-import { Pair, PoolItem } from '@/components/pool-item'
+import { SearchInput } from '@/components/pool/pool-search-input'
+import { Pair, PoolItem } from '@/components/pool/pool-item'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 
@@ -44,7 +44,7 @@ export function PoolList({ query }: { query?: string }) {
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
       <div className="bg-card flex space-x-2 p-6">
         <SearchInput />
-        <Link href="/dlmm/pool-creation">
+        <Link href="/dlmm/create">
           <Button variant="light" className="cursor-pointer">
             <Plus /> Create Pool
           </Button>
