@@ -23,10 +23,12 @@ export type SearchProps = {
 
 type SelectCoinAutocompleteProps = {
   onSelect: (coin: ApiCoinItem) => void
+  placeholder: string
   error?: string
+  disabled?: boolean
 }
 
-export function SelectCoinAutocomplete({ onSelect, error }: SelectCoinAutocompleteProps) {
+export function SelectCoinAutocomplete({ onSelect, error, placeholder, disabled }: SelectCoinAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<ApiCoinItem | undefined>()
   const [triggerFetch, setTriggerFetch] = useState(false)
@@ -45,14 +47,15 @@ export function SelectCoinAutocomplete({ onSelect, error }: SelectCoinAutocomple
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild className={cn({ 'border-red-400': error })}>
+      <PopoverTrigger asChild className={cn({ 'border-red-400': error })} disabled={disabled}>
         <Button variant="outline" role="combobox" className="w-full justify-start">
           {selected ? (
             <>
-              <img src={selected.logoURI} alt="" width="24" height="24" /> {selected.symbol}
+              <img src={selected.logoURI} alt="" width="24" height="24" />
+              <span>{selected.symbol}</span>
             </>
           ) : (
-            'Select Coin'
+            <span className="text-muted-foreground">{placeholder}</span>
           )}
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>

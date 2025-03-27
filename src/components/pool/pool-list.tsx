@@ -13,7 +13,7 @@ export type Pool = {
 }
 
 const fetchPools = async (query?: string) => {
-  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/clmm-api/pair/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
+  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
   if (query) {
     apiUrl += `&search_term=${encodeURIComponent(query)}`
   }

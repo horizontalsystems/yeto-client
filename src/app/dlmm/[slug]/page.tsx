@@ -16,7 +16,7 @@ import { toAmount, toPercent, truncate } from '@/lib/utils'
 export default async function Dlmm({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  const res = await fetch(`${process.env.NEXT_SERVER_API_URL}/clmm-api/pair/${slug}`, {
+  const res = await fetch(`${process.env.NEXT_SERVER_API_URL}/dev-clmm-api/pair/${slug}`, {
     headers: {
       Referer: `${process.env.NEXT_SERVER_API_URL}/dlmm/${slug}`
     }
@@ -51,7 +51,7 @@ export default async function Dlmm({ params }: { params: Promise<{ slug: string 
             <div className="text-foreground text-2xl uppercase">
               {base} / {quote}
             </div>
-            <Link href="/dlmm/create">
+            <Link href={`/dlmm/create?pool=${slug}`}>
               <Button variant="light" className="cursor-pointer">
                 <Plus /> Add liquidity
               </Button>

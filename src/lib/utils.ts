@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { PublicKey } from '@solana/web3.js'
+import { BN } from '@coral-xyz/anchor'
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -45,4 +46,18 @@ export function derivePresetParameter(programId: PublicKey, binStep: number, bas
   )
 
   return publicKey
+}
+
+export function binIdToBinArrayIndex(binId: BN): BN {
+  const MAX_BIN_ARRAY_SIZE = new BN(70)
+  const { div: idx, mod } = binId.divmod(MAX_BIN_ARRAY_SIZE)
+  return binId.isNeg() && mod != 0 ? idx.sub(new BN(1)) : idx
+}
+
+export function percentageChange(oldNumber: number, newNumber: number) {
+  if (!oldNumber || !newNumber) {
+    return null
+  }
+
+  return -((oldNumber - newNumber) / oldNumber) * 100
 }

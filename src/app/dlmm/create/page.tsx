@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/breadcrumb'
 import Link from 'next/link'
 
-export default function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ pool?: string }> }) {
+  const poolAddress = (await searchParams).pool
+
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
       <Breadcrumb className="mt-10 mb-4">
@@ -27,7 +29,7 @@ export default function Page() {
       </Breadcrumb>
 
       <div className="rounded-lg border">
-        <DlmmFormTabs />
+        <DlmmFormTabs poolAddress={poolAddress} />
       </div>
     </div>
   )

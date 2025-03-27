@@ -1,69 +1,292 @@
 'use client'
 
-import { Bar, BarChart, CartesianGrid } from 'recharts'
+import DLMM, {
+  getBinArraysRequiredByPositionRange,
+  getBinFromBinArray,
+  getPriceOfBinByBinId,
+  StrategyType
+} from '@meteora-ag/dlmm'
+import { useThrottledCallback } from 'use-debounce'
+import { BN } from '@coral-xyz/anchor'
+import { ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartContainer } from '@/components/ui/chart'
-import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { createBalancePosition } from '@/lib/pool-utils'
+import { Switch } from '@/components/ui/switch'
+import { ButtonConnect } from '@/components/button-connect'
+import { Slider } from '@/components/ui/slider'
+import { RangeBar } from '@/components/chart/range-bar'
+import { StrategyBar } from '@/components/chart/strategy-bar'
+import { binIdToBinArrayIndex, percentageChange } from '@/lib/utils'
 
-export function DlmmAddLiquidity() {
-  const spotConfig = {
-    spotA: { color: '#BE46FF' },
-    spotB: { color: '#2848FF' }
-  }
+export interface AddLiquidityProps {
+  address: string
+  name: string
+  mintX: string
+  mintXUrl: string
+  mintY: string
+  mintYUrl: string
+}
 
-  const spotRangeA = Array(20).fill({ spotA: 40, spotB: 0 })
-  const spotRangeB = Array(20).fill({ spotA: 0, spotB: 40 })
-  const spotData = [...spotRangeA, { spotA: 20, spotB: 20 }, ...spotRangeB]
+export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiquidityProps) {
+  const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
+  const [base, quote] = name.split('-')
 
-  const rangeConfig = {
-    range: { color: '#808085' },
-    rest: { color: '#4B4B4B' }
-  }
+  const [activeBinId, setActiveBinId] = useState<number>(0)
+  const [bins, setBins] = useState<{ liquidity: string; binId: number }[]>([])
+  const [binRange] = useState([-34, 34])
 
-  const rangeData = [
-    ...Array(5).fill({ rest: 0, range: 35 }),
-    ...Array(5).fill({ rest: 0, range: 37 }),
-    ...Array(5).fill({ rest: 0, range: 33 }),
-    ...Array(5).fill({ rest: 40, range: 0 }),
-    ...Array(5).fill({ rest: 35, range: 0 }),
-    ...Array(5).fill({ rest: 40, range: 0 }),
-    ...Array(5).fill({ rest: 0, range: 32 }),
-    ...Array(5).fill({ rest: 0, range: 37 }),
-    ...Array(5).fill({ rest: 0, range: 35 })
-  ]
+  const [formState, setFormState] = useState<{ submitting: boolean; signature?: string; error?: string }>({
+    submitting: false
+  })
 
   const strategies = ['Spot', 'Bid-Ask']
+  const [strategy, setStrategy] = useState<string>(strategies[0])
+
+  const binRangeRef = useRef<number[]>(binRange)
+  const binShiftRef = useRef<number>(0)
+
+  const baseAmountRef = useRef<HTMLInputElement>(null)
+  const quoteAmountRef = useRef<HTMLInputElement>(null)
+
+  const minPriceRef = useRef<HTMLInputElement>(null)
+  const minPriceChangeRef = useRef<HTMLInputElement>(null)
+  const maxPriceRef = useRef<HTMLInputElement>(null)
+  const maxPriceChangeRef = useRef<HTMLInputElement>(null)
+
+  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
+  const connection = useMemo(() => new Connection(endpoint), [endpoint])
+  const dlmmInstance = useMemo(
+    () => DLMM.create(connection, new PublicKey(address), { cluster: 'devnet' }),
+    [connection, address]
+  )
+
+  const handleSubmit = async (v: SyntheticEvent) => {
+    v.preventDefault()
+
+    if (!walletPubKey || !connected) {
+      return console.error('Wallet not connected')
+    }
+
+    try {
+      setFormState({ submitting: true })
+
+      const dlmmPool = await dlmmInstance
+
+      const amountX = baseAmountRef.current ? parseFloat(baseAmountRef.current.value) : 0
+      const amountY = quoteAmountRef.current ? parseFloat(quoteAmountRef.current.value) : 0
+
+      const { createPositionTx, newBalancePosition } = await createBalancePosition(
+        dlmmPool,
+        amountX,
+        amountY,
+        new BN(binRangeRef.current[0] - binShiftRef.current),
+        new BN(binRangeRef.current[1] - binShiftRef.current),
+        walletPubKey,
+        connection,
+        strategy === 'Spot' ? StrategyType.Spot : StrategyType.BidAsk
+      )
+
+      const signature = await sendTransaction(createPositionTx, connection, {
+        signers: [newBalancePosition]
+      })
+
+      setFormState({ submitting: false, signature })
+    } catch (e) {
+      let error = 'Failed to add liquidity'
+      if (e instanceof Error) {
+        error = e.message
+      }
+
+      setFormState({ submitting: false, error })
+    }
+  }
+
+  const calculateBins = useThrottledCallback(async () => {
+    const pool = await dlmmInstance
+    const activeBin = await pool.getActiveBin()
+
+    const minBinId = new BN(activeBin.binId + (binRangeRef.current[0] - binShiftRef.current))
+    const maxBinId = new BN(activeBin.binId + (binRangeRef.current[1] - binShiftRef.current))
+
+    const startPrice = getPriceOfBinByBinId(minBinId.toNumber(), pool.lbPair.binStep)
+    const startPriceChange = percentageChange(parseFloat(activeBin.price), startPrice.toNumber())
+
+    if (minPriceRef.current) {
+      minPriceRef.current.value = startPrice.toString()
+    }
+    if (minPriceChangeRef.current && startPriceChange) {
+      minPriceChangeRef.current.value = startPriceChange.toFixed(2).toString() + '%'
+    }
+    const endPrice = getPriceOfBinByBinId(maxBinId.toNumber(), pool.lbPair.binStep)
+    const endPriceChange = percentageChange(parseFloat(activeBin.price), endPrice.toNumber())
+    if (maxPriceRef.current) {
+      maxPriceRef.current.value = endPrice.toString()
+    }
+    if (maxPriceChangeRef.current && endPriceChange) {
+      maxPriceChangeRef.current.value = endPriceChange.toFixed(2).toString() + '%'
+    }
+
+    const binArraysRequired = getBinArraysRequiredByPositionRange(
+      new PublicKey(address),
+      minBinId,
+      maxBinId,
+      pool.program.programId
+    )
+
+    const publicKeys = binArraysRequired.map(i => i.key)
+    const binArrays = await pool.program.account.binArray.fetchMultiple(publicKeys)
+
+    const getBin = (binId: BN) => {
+      const binArrayIdx = binIdToBinArrayIndex(binId)
+      const binArray = binArrays.find(ba => {
+        return ba?.index.eq(binArrayIdx)
+      })
+
+      return binArray ? getBinFromBinArray(binId, binArray) : null
+    }
+
+    const bins = []
+    for (let i = minBinId.toNumber(); i < maxBinId.toNumber() + 1; i++) {
+      const bin = getBin(new BN(i))
+      if (bin) {
+        bins.push({
+          liquidity: bin.liquiditySupply.toString(),
+          amountX: bin.amountX.toString(),
+          amountY: bin.amountY.toString(),
+          activeBin: activeBin.binId === i,
+          rangeX: activeBin.binId > i,
+          rangeY: activeBin.binId < i,
+          binId: i
+        })
+      }
+    }
+
+    setActiveBinId(activeBin.binId)
+    setBins(bins)
+  }, 300)
+
+  useEffect(() => {
+    calculateBins()
+  }, [calculateBins])
+
+  const onShiftBin = (v: number[]) => {
+    binShiftRef.current = v[0]
+    calculateBins()
+  }
+
+  const onRangeChange = (v: number[]) => {
+    binRangeRef.current = v
+    calculateBins()
+  }
+
+  const onChangeBaseAmount = async (v: ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(v.target.value) || 0
+    const pool = await dlmmInstance
+    const activeBin = await pool.getActiveBin()
+    if (quoteAmountRef.current) {
+      quoteAmountRef.current.value = (parseFloat(activeBin.price) * value).toString()
+    }
+  }
+
+  const onChangeQuoteAmount = async (v: ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(v.target.value) || 0
+    const pool = await dlmmInstance
+    const activeBin = await pool.getActiveBin()
+    if (baseAmountRef.current) {
+      baseAmountRef.current.value = (value * parseFloat(activeBin.price)).toString()
+    }
+  }
 
   return (
-    <form className="p-6">
-      <div className="mb-6 grid gap-6 md:grid-cols-2">
-        <div>
-          <Label htmlFor="base_amount" className="mb-2">
-            Base amount
-          </Label>
-          <Input type="number" id="base_amount" defaultValue="0.0" />
+    <form className="p-6" onSubmit={handleSubmit}>
+      <div className="mb-3">
+        {formState.signature && (
+          <div className="mb-6 rounded-lg border border-green-400 p-4">
+            <div className="flex flex-row items-center">
+              <Info className="text-green-400" />
+              <span className="ms-2">Liquidity added:</span>
+              <a className="ms-2 text-blue-400" href={`https://solscan.io/tx/${formState.signature}`}>
+                <ExternalLink size="18" />
+              </a>
+            </div>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <div className="text-2xl">Enter amount</div>
+          <div className="flex gap-2">
+            <div className="flex items-center">
+              <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
+              <Switch className="ms-1" checked />
+            </div>
+            <Select defaultValue="1%">
+              <SelectTrigger className="h-8 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="min-w-0">
+                <SelectGroup>
+                  {['1%', '2%', '3%'].map((item, i) => (
+                    <SelectItem key={i} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div>
-          <Label htmlFor="quote_amount" className="mb-2">
-            Quote amount
-          </Label>
-          <Input type="number" id="quote_amount" defaultValue="0.0" />
+        <div className="text-muted-foreground mt-1 text-sm">
+          Specify the token amounts you&#39;d like to contribute to the liquidity pool.
+        </div>
+      </div>
+      <div className="mb-6 grid gap-6 md:grid-cols-2">
+        <div className="relative flex grow-1">
+          <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
+            <img src={mintXUrl} alt="" width="24" height="24" />
+            <span className="ms-2">{base}</span>
+          </div>
+          <Input
+            ref={baseAmountRef}
+            type="text"
+            placeholder="0"
+            className="ps-10 text-right"
+            onChange={onChangeBaseAmount}
+            disabled={formState.submitting}
+          />
+        </div>
+        <div className="relative flex grow-1">
+          <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
+            <img src={mintYUrl} alt="" width="24" height="24" />
+            <span className="ms-2">{quote}</span>
+          </div>
+          <Input
+            ref={quoteAmountRef}
+            type="text"
+            placeholder="0"
+            className="ps-10 text-right"
+            onChange={onChangeQuoteAmount}
+            disabled={formState.submitting}
+          />
         </div>
       </div>
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="">Set Price Range</div>
           <div className="flex justify-between gap-2">
-            <Button variant="outline">Reset</Button>
-            <Select>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Spot" />
+            <Button variant="outline" size="sm" type="button">
+              Reset
+            </Button>
+            <Select defaultValue={strategy} onValueChange={setStrategy} disabled={formState.submitting}>
+              <SelectTrigger className="h-8 w-full">
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="min-w-0">
                 <SelectGroup>
                   {strategies.map((item, i) => (
                     <SelectItem key={i} value={item}>
@@ -73,55 +296,90 @@ export function DlmmAddLiquidity() {
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <ToggleGroup type="single" variant="outline">
+            <ToggleGroup type="single" variant="outline" size="sm" defaultValue="sol" disabled={formState.submitting}>
               <ToggleGroupItem value="sol" className="px-3">
-                SOl
+                {base}
               </ToggleGroupItem>
-              <ToggleGroupItem value="usdc" className="px-3">
-                USDC
+              <ToggleGroupItem value="usdc" className="px-3" disabled>
+                {quote}
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
         </div>
         <div className="my-4">
-          <ChartContainer config={spotConfig} className="h-20 w-full">
-            <BarChart accessibilityLayer data={spotData}>
-              <CartesianGrid vertical={false} />
-              <Bar isAnimationActive={false} dataKey="spotA" stackId="a" fill="var(--color-spotA)" radius={4} />
-              <Bar isAnimationActive={false} dataKey="spotB" stackId="a" fill="var(--color-spotB)" radius={4} />
-            </BarChart>
-          </ChartContainer>
-          <Slider value={[50]} max={100} step={1} className="w-full" />
+          <StrategyBar strategy={strategy} data={bins} activeBinId={activeBinId} />
+          <Slider
+            defaultValue={[0]}
+            min={binRange[0]}
+            max={binRange[1]}
+            step={1}
+            className="w-full"
+            onValueChange={onShiftBin}
+            disabled={bins.length === 0 || formState.submitting}
+          />
         </div>
 
         <div className="my-4">
-          <ChartContainer config={rangeConfig} className="h-20 w-full">
-            <BarChart accessibilityLayer data={rangeData}>
-              <CartesianGrid vertical={false} />
-              <Bar isAnimationActive={false} dataKey="range" stackId="a" fill="var(--color-range)" radius={4} />
-              <Bar isAnimationActive={false} dataKey="rest" stackId="a" fill="var(--color-rest)" radius={4} />
-            </BarChart>
-          </ChartContainer>
-          <Slider value={[34, 66]} max={100} step={1} className="w-full" />
+          <RangeBar data={bins} activeBinId={activeBinId} />
+          <Slider
+            defaultValue={binRange}
+            min={binRange[0]}
+            max={binRange[1]}
+            step={1}
+            onValueChange={onRangeChange}
+            disabled={bins.length === 0 || formState.submitting}
+          />
         </div>
       </div>
       <div className="mb-6 flex gap-2">
         <div className="w-full md:w-8/12">
           <Label className="mb-2">Min Price</Label>
-          <Input type="number" placeholder="0" />
+          <div className="relative flex">
+            <Input
+              ref={minPriceRef}
+              className="grow-1 rounded-r-none border-r-0"
+              type="text"
+              onChange={v => console.log(v)}
+              disabled={formState.submitting}
+            />
+            <Input
+              ref={minPriceChangeRef}
+              className="w-30 rounded-s-none"
+              placeholder="0%"
+              disabled={formState.submitting}
+            />
+          </div>
         </div>
         <div className="w-full md:w-8/12">
           <Label className="mb-2">Max Price</Label>
-          <Input type="number" placeholder="0" />
+          <div className="relative flex">
+            <Input
+              ref={maxPriceRef}
+              className="grow-1 rounded-r-none border-r-0"
+              type="text"
+              onChange={v => console.log(v)}
+              disabled={formState.submitting}
+            />
+            <Input
+              ref={maxPriceChangeRef}
+              className="w-30 rounded-s-none"
+              placeholder="0%"
+              disabled={formState.submitting}
+            />
+          </div>
         </div>
-        <div className="w-full md:w-4/12">
+        <div className="w-4/12 md:w-1/12">
           <Label className="mb-2">Bins</Label>
-          <Input type="text" placeholder="1" />
+          <Input type="text" placeholder="69" value={Math.abs(binRange[0]) + binRange[1]} disabled />
         </div>
       </div>
-      <Button variant="light" type="submit">
-        Add Liquidity
-      </Button>
+      {connected ? (
+        <Button variant="light" type="submit" className="cursor-pointer" disabled={formState.submitting}>
+          Add Liquidity
+        </Button>
+      ) : (
+        <ButtonConnect />
+      )}
     </form>
   )
 }
