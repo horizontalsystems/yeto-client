@@ -3,9 +3,9 @@
 import useSWR from 'swr'
 import Link from 'next/link'
 import { SearchInput } from '@/components/pool/pool-search-input'
-import { Pair, PoolItem } from '@/components/pool/pool-item'
+import { Pair, PoolListItem } from '@/components/pool/pool-list-item'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { LoaderCircle, Plus } from 'lucide-react'
 
 export type Pool = {
   name: string
@@ -38,7 +38,18 @@ export function PoolList({ query }: { query?: string }) {
   })
 
   if (error) return <p className="text-red-500">There was an error fetching pools.</p>
-  if (isLoading || !pools) return <p>Loading...</p>
+  if (isLoading || !pools) {
+    return (
+      <div className="flex flex-col rounded-lg border">
+        <div className="flex h-[410px] w-full flex-col items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+            <div>Loading...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
@@ -51,43 +62,31 @@ export function PoolList({ query }: { query?: string }) {
         </Link>
       </div>
 
-      <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-        <thead className="text-gray bg-card border-t text-xs">
-          <tr>
-            <th scope="col" className="px-6 py-3">
-              Pool
-            </th>
-            <th scope="col" className="px-6 py-3">
-              TVL
-            </th>
-            <th scope="col" className="px-6 py-3">
-              24h Vol
-            </th>
-            <th scope="col" className="px-6 py-3">
-              24h Fee/TVL
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {pools.map((pool: Pool, index: number) => {
-            let tvl = 0
-            let volume = 0
-            let apr = 0 // max apr
+      <div className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-gray bg-card flex w-full border-t text-xs">
+          <div className="w-1/4 px-6 py-3 font-medium">Pool</div>
+          <div className="w-1/4 px-6 py-3 font-medium">TVL</div>
+          <div className="w-1/4 px-6 py-3 font-medium">24h Vol</div>
+          <div className="w-1/4 px-6 py-3 font-medium">24h Fee/TVL</div>
+        </div>
+        {pools.map((pool: Pool, index: number) => {
+          let tvl = 0
+          let volume = 0
+          let apr = 0 // max apr
 
-            const pairs: Pair[] = []
+          const pairs: Pair[] = []
 
-            for (let i = 0; i < pool.pairs.length; i += 1) {
-              const pair = pool.pairs[i]
-              tvl += parseFloat(pair.liquidity)
-              volume += parseFloat(pair.trade_volume_24h)
-              apr += parseFloat(pair.apr)
-              pairs.push(pair)
-            }
+          for (let i = 0; i < pool.pairs.length; i += 1) {
+            const pair = pool.pairs[i]
+            tvl += parseFloat(pair.liquidity)
+            volume += parseFloat(pair.trade_volume_24h)
+            apr += parseFloat(pair.apr)
+            pairs.push(pair)
+          }
 
-            return <PoolItem key={index} name={pool.name} tvl={tvl} volume={volume} apr={apr} pairs={pairs} />
-          })}
-        </tbody>
-      </table>
+          return <PoolListItem key={index} name={pool.name} tvl={tvl} volume={volume} apr={apr} pairs={pairs} />
+        })}
+      </div>
     </div>
   )
 }

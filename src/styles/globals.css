@@ -4,6 +4,14 @@
 @plugin "tailwindcss-animate";
 
 @theme inline {
+  --color-tyler: var(--tyler);
+  --color-lawrence: var(--lawrence);
+  --color-claude: var(--claude);
+  --color-bran: var(--bran);
+  --color-andy: var(--andy);
+  --color-leah: var(--leah);
+  --color-jacob: var(--jacob);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -36,6 +44,32 @@
 
 @layer base {
   :root {
+    --black: #000000;
+    --dark: #151515;
+    --carbon: #232323;
+    --smoke: #4B4B4B;
+    --gray: #808085;
+    --steel: #B3B3B3;
+    --light: #DFDFDF;
+    --bright: #EDEDED;
+    --white: #FFFFFF;
+    --blue: #2848FF;
+    --sunset: #FF2C00;
+    --yellow: #FFB700;
+    --green: #0AC18E;
+    --gray-50: #808085;
+    --orange: #FF9500;
+  }
+
+  :root {
+    --tyler: var(--bright);
+    --lawrence: var(--white);
+    --claude: var(--bright);
+    --bran: var(--light);
+    --andy: var(--steel);
+    --leah: var(--dark);
+    --jacob: var(--orange);
+
     --background: hsl(0 0% 100%);
     --foreground: hsl(222.2 84% 4.9%);
     --card: hsl(0 0% 100%);
@@ -64,6 +98,14 @@
   }
 
   .dark {
+    --tyler: var(--black);
+    --lawrence: var(--dark);
+    --claude: var(--carbon);
+    --bran: var(--carbon);
+    --andy: var(--smoke);
+    --leah: var(--bright);
+    --jacob: var(--yellow);
+
     --background: black;
     --foreground: white;
     --card: #151515;
