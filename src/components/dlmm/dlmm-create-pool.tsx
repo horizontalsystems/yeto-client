@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import DLMM from '@meteora-ag/dlmm'
 import { SyntheticEvent, useState } from 'react'
 import { Info } from 'lucide-react'
@@ -17,7 +16,12 @@ import { DLMM_PROGRAM_IDS } from '@/lib/constants'
 import { omit, parseInt } from 'es-toolkit/compat'
 import { ButtonConnect } from '@/components/button-connect'
 
-export function DlmmCreatePool() {
+interface DlmmCreatePoolProps {
+  onCreate: (address: string) => void
+  onClickNext: (address: string) => void
+}
+
+export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [base, setBase] = useState<ApiCoinItem>()
   const [quote, setQuote] = useState<ApiCoinItem>()
@@ -25,7 +29,7 @@ export function DlmmCreatePool() {
   const [baseFee, setBaseFee] = useState(0)
   const [initialPrice, setInitialPrice] = useState(1)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
-  const [formState, setFormState] = useState<{ submitting: boolean; signature?: string; error?: string }>({
+  const [formState, setFormState] = useState<{ submitting: boolean; newPoolAddress?: string; error?: string }>({
     submitting: false
   })
 
@@ -51,7 +55,7 @@ export function DlmmCreatePool() {
 
       const programId = new PublicKey(DLMM_PROGRAM_IDS.devnet)
       const tokenMintX = new PublicKey(base.address)
-      const tokenMintY = new PublicKey('CpZKSV4mVAM7EjR5vYv5kLBr6cZCG5WyhHCw68SSwtUx')
+      const tokenMintY = new PublicKey(quote.address)
       const baseFactor = (baseFee * 10000 ** 2) / (100 * binStep)
 
       const [poolAddress] = PublicKey.findProgramAddressSync(
@@ -80,7 +84,9 @@ export function DlmmCreatePool() {
       )
 
       const signature = await sendTransaction(rawTx, connection)
-      setFormState({ submitting: false, signature })
+      console.log('signature', signature)
+      setFormState({ submitting: false, newPoolAddress: poolAddress.toBase58() })
+      onCreate(poolAddress.toBase58())
     } catch (e) {
       console.log(e)
       let error = 'Failed to create pool'
@@ -103,13 +109,17 @@ export function DlmmCreatePool() {
   }
 
   const actions = () => {
-    if (formState.signature) {
+    const newPoolAddress = formState.newPoolAddress
+    if (newPoolAddress) {
       return (
-        <Link href={`/dlmm/create?pool=${formState.signature}`}>
-          <Button variant="default" type="submit" className="mt-6 cursor-pointer">
-            Next
-          </Button>
-        </Link>
+        <Button
+          variant="default"
+          type="button"
+          className="mt-6 cursor-pointer"
+          onClick={() => onClickNext(newPoolAddress)}
+        >
+          Next
+        </Button>
       )
     }
     if (connected) {
@@ -196,7 +206,7 @@ export function DlmmCreatePool() {
           </div>
         </div>
       )}
-      {formState.signature && (
+      {formState.newPoolAddress && (
         <div className="mb-6 rounded-lg border border-green-400 p-4">
           <div className="flex flex-row">
             <Info className="text-green-400" />

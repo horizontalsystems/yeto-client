@@ -7,7 +7,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
 
   return (
     <Dialog open>
-      <DialogContent className="w-full sm:min-w-2xl">
+      <DialogContent className="w-full sm:min-w-8/12">
         <VisuallyHidden>
           <DialogTitle>Pool creation</DialogTitle>
         </VisuallyHidden>
