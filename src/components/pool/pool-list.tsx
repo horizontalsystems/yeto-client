@@ -2,10 +2,11 @@
 
 import useSWR from 'swr'
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { SearchInput } from '@/components/pool/pool-search-input'
 import { Pair, PoolListItem } from '@/components/pool/pool-list-item'
 import { Button } from '@/components/ui/button'
-import { LoaderCircle, Plus } from 'lucide-react'
+import { PoolListSkeleton } from '@/components/pool/pool-list-skeleton'
 
 export type Pool = {
   name: string
@@ -39,16 +40,7 @@ export function PoolList({ query }: { query?: string }) {
 
   if (error) return <p className="text-red-500">There was an error fetching pools.</p>
   if (isLoading || !pools) {
-    return (
-      <div className="flex flex-col rounded-lg border">
-        <div className="flex h-[410px] w-full flex-col items-center justify-center">
-          <div className="flex items-center space-x-3">
-            <LoaderCircle className="h-5 w-5 animate-spin" />
-            <div>Loading...</div>
-          </div>
-        </div>
-      </div>
-    )
+    return <PoolListSkeleton />
   }
 
   return (

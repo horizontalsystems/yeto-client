@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, LiquidityCharts } from '@/components/dlmm/liquidity-charts'
 import { binIdToBinArrayIndex, percentageChange } from '@/lib/utils'
+import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
 
 export interface AddLiquidityProps {
   address: string
@@ -39,6 +40,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   const [binRange] = useState([-34, 34])
   const [bins, setBins] = useState<BinItem[]>([])
   const [activeBinId, setActiveBinId] = useState<number>(0)
+  const [initializing, setInitializing] = useState(true)
 
   const [formState, setFormState] = useState<{ submitting: boolean; signature?: string; error?: string }>({
     submitting: false
@@ -175,8 +177,13 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   const calculateBinsThrottle = useDebouncedCallback(calculateBins, 300)
 
   useEffect(() => {
-    syncBins().then(calculateBins)
-  }, [calculateBins, syncBins])
+    setInitializing(true)
+    syncBins()
+      .then(calculateBins)
+      .finally(() => {
+        setInitializing(false)
+      })
+  }, [address])
 
   const onChangeBaseAmount = async (v: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(v.target.value) || 0
@@ -194,6 +201,10 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     if (baseAmountRef.current) {
       baseAmountRef.current.value = (value * parseFloat(activeBin.price)).toString()
     }
+  }
+
+  if (initializing) {
+    return <DlmmAddLiquiditySkeleton />
   }
 
   return (
