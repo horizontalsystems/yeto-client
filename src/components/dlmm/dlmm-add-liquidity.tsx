@@ -6,7 +6,7 @@ import DLMM, {
   getPriceOfBinByBinId,
   StrategyType
 } from '@meteora-ag/dlmm'
-import { useThrottledCallback } from 'use-debounce'
+import { useDebouncedCallback } from 'use-debounce'
 import { BN } from '@coral-xyz/anchor'
 import { ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,14 +15,12 @@ import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { ChangeEvent, SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { createBalancePosition } from '@/lib/pool-utils'
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
-import { Slider } from '@/components/ui/slider'
-import { RangeBar } from '@/components/chart/range-bar'
-import { StrategyBar } from '@/components/chart/strategy-bar'
+import { BinItem, LiquidityCharts } from '@/components/dlmm/liquidity-charts'
 import { binIdToBinArrayIndex, percentageChange } from '@/lib/utils'
 
 export interface AddLiquidityProps {
@@ -38,9 +36,9 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [base, quote] = name.split('-')
 
-  const [activeBinId, setActiveBinId] = useState<number>(0)
-  const [bins, setBins] = useState<{ liquidity: string; binId: number }[]>([])
   const [binRange] = useState([-34, 34])
+  const [bins, setBins] = useState<BinItem[]>([])
+  const [activeBinId, setActiveBinId] = useState<number>(0)
 
   const [formState, setFormState] = useState<{ submitting: boolean; signature?: string; error?: string }>({
     submitting: false
@@ -108,12 +106,18 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     }
   }
 
-  const calculateBins = useThrottledCallback(async () => {
+  const syncBins = useCallback(async () => {
+    const pool = await dlmmInstance
+    const activeBin = await pool.getActiveBin()
+    setActiveBinId(activeBin.binId)
+  }, [dlmmInstance])
+
+  const calculateBins = useCallback(async () => {
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
 
-    const minBinId = new BN(activeBin.binId + (binRangeRef.current[0] - binShiftRef.current))
-    const maxBinId = new BN(activeBin.binId + (binRangeRef.current[1] - binShiftRef.current))
+    const minBinId = new BN(activeBin.binId + binRange[0] - binShiftRef.current)
+    const maxBinId = new BN(activeBin.binId + binRange[1] - binShiftRef.current)
 
     const startPrice = getPriceOfBinByBinId(minBinId.toNumber(), pool.lbPair.binStep)
     const startPriceChange = percentageChange(parseFloat(activeBin.price), startPrice.toNumber())
@@ -143,8 +147,8 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const publicKeys = binArraysRequired.map(i => i.key)
     const binArrays = await pool.program.account.binArray.fetchMultiple(publicKeys)
 
-    const getBin = (binId: BN) => {
-      const binArrayIdx = binIdToBinArrayIndex(binId)
+    const getBin = (binId: number) => {
+      const binArrayIdx = binIdToBinArrayIndex(new BN(binId))
       const binArray = binArrays.find(ba => {
         return ba?.index.eq(binArrayIdx)
       })
@@ -152,39 +156,27 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
       return binArray ? getBinFromBinArray(binId, binArray) : null
     }
 
-    const bins = []
-    for (let i = minBinId.toNumber(); i < maxBinId.toNumber() + 1; i++) {
-      const bin = getBin(new BN(i))
-      if (bin) {
-        bins.push({
-          liquidity: bin.liquiditySupply.toString(),
-          amountX: bin.amountX.toString(),
-          amountY: bin.amountY.toString(),
-          activeBin: activeBin.binId === i,
-          rangeX: activeBin.binId > i,
-          rangeY: activeBin.binId < i,
-          binId: i
-        })
+    const newBins = []
+    for (let i = minBinId.toNumber(); i <= maxBinId.toNumber(); i++) {
+      const bin = getBin(i)
+      const binItem = {
+        liquidity: bin ? bin.liquiditySupply.toString() : '0',
+        amountX: bin ? bin.amountX.toString() : '0',
+        amountY: bin ? bin.amountY.toString() : '0',
+        activeBin: activeBin.binId === i,
+        binId: i
       }
+      newBins.push(binItem)
     }
 
-    setActiveBinId(activeBin.binId)
-    setBins(bins)
-  }, 300)
+    setBins(newBins)
+  }, [address, binRange, dlmmInstance])
+
+  const calculateBinsThrottle = useDebouncedCallback(calculateBins, 300)
 
   useEffect(() => {
-    calculateBins()
-  }, [calculateBins])
-
-  const onShiftBin = (v: number[]) => {
-    binShiftRef.current = v[0]
-    calculateBins()
-  }
-
-  const onRangeChange = (v: number[]) => {
-    binRangeRef.current = v
-    calculateBins()
-  }
+    syncBins().then(calculateBins)
+  }, [calculateBins, syncBins])
 
   const onChangeBaseAmount = async (v: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(v.target.value) || 0
@@ -306,30 +298,16 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
             </ToggleGroup>
           </div>
         </div>
-        <div className="my-4">
-          <StrategyBar strategy={strategy} data={bins} activeBinId={activeBinId} />
-          <Slider
-            defaultValue={[0]}
-            min={binRange[0]}
-            max={binRange[1]}
-            step={1}
-            className="w-full"
-            onValueChange={onShiftBin}
-            disabled={bins.length === 0 || formState.submitting}
-          />
-        </div>
-
-        <div className="my-4">
-          <RangeBar data={bins} activeBinId={activeBinId} />
-          <Slider
-            defaultValue={binRange}
-            min={binRange[0]}
-            max={binRange[1]}
-            step={1}
-            onValueChange={onRangeChange}
-            disabled={bins.length === 0 || formState.submitting}
-          />
-        </div>
+        <LiquidityCharts
+          binRange={binRange}
+          binRangeRef={binRangeRef}
+          binShiftRef={binShiftRef}
+          bins={bins}
+          strategy={strategy}
+          activeBinId={activeBinId}
+          calculateBinsThrottle={calculateBinsThrottle}
+          disabled={formState.submitting}
+        />
       </div>
       <div className="mb-6 flex gap-2">
         <div className="w-full md:w-8/12">
