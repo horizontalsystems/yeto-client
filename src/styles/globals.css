@@ -12,6 +12,9 @@
   --color-leah: var(--leah);
   --color-jacob: var(--jacob);
 
+  --color-gray: #808085;
+  --color-bright: #EDEDED;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

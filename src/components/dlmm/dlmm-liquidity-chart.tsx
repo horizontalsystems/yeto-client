@@ -29,7 +29,7 @@ const colors = {
   tokenY: '#2848FF'
 }
 
-function LiquidityCharts({
+function DlmmLiquidityChart({
   bins,
   activeBinId,
   strategy,
@@ -206,4 +206,4 @@ function createChart(ctx: CanvasRenderingContext2D, radius: number) {
   })
 }
 
-export { LiquidityCharts }
+export { DlmmLiquidityChart }

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,14 +9,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { toAmount, toPercent, truncate } from '@/lib/utils'
 import { TvlChart } from '@/components/chart/tvl-chart'
 import { SwapVolumeChart } from '@/components/chart/swap-volume-chart'
-import { Skeleton } from '@/components/ui/skeleton'
+import { DlmmPageSkeleton } from '@/components/dlmm/dlmm-page-skeleton'
 
 type Pair = {
   name: string
@@ -42,13 +42,12 @@ export function DlmmPage({ address }: { address: string }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${address}`)
       .then(res => res.json())
       .then(pair => {
-        console.log(pair)
         setPair(pair)
       })
   }, [address])
 
   if (!pair) {
-    return <LiquidityPoolSkeleton />
+    return <DlmmPageSkeleton />
   }
 
   const [base, quote] = pair.name.split('-')
@@ -75,11 +74,18 @@ export function DlmmPage({ address }: { address: string }) {
             <div className="text-foreground text-2xl uppercase">
               {base} / {quote}
             </div>
-            <Link href={`/dlmm/create?pool=${address}`}>
-              <Button variant="light" className="cursor-pointer">
-                <Plus /> Add liquidity
-              </Button>
-            </Link>
+            <div className="flex space-x-3">
+              <Link href={`/dlmm/swap/${address}`}>
+                <Button variant="default" className="cursor-pointer">
+                  Swap
+                </Button>
+              </Link>
+              <Link href={`/dlmm/create?pool=${address}`}>
+                <Button variant="light" className="cursor-pointer">
+                  <Plus /> Add liquidity
+                </Button>
+              </Link>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-4">
             <div>
@@ -196,60 +202,6 @@ export function DlmmPage({ address }: { address: string }) {
           </div>
         </div>
         <div className="bg-card min-h-[100vh] flex-1 rounded-xl p-6 md:min-h-min">Transactions</div>
-      </div>
-    </div>
-  )
-}
-
-function LiquidityPoolSkeleton() {
-  return (
-    <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-      <Breadcrumb className="mt-10 mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink asChild>
-              <Link href="/">Pools</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator className="hidden md:block" />
-          <BreadcrumbItem>
-            <BreadcrumbPage>
-              <Skeleton className="mt-1 h-4 w-20" />
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex flex-1 flex-col gap-4 pt-0">
-        <div className="bg-card w-full rounded-xl p-6 pb-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="bg-card rounded-xl p-6">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="mt-4 h-64 w-full rounded-md" />
-          </div>
-          <div className="bg-card rounded-xl p-6">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="mt-4 h-64 w-full rounded-md" />
-          </div>
-        </div>
       </div>
     </div>
   )

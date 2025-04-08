@@ -20,7 +20,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { createBalancePosition } from '@/lib/pool-utils'
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
-import { BinItem, LiquidityCharts } from '@/components/dlmm/liquidity-charts'
+import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
 import { binIdToBinArrayIndex, percentageChange } from '@/lib/utils'
 import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
 
@@ -309,7 +309,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
             </ToggleGroup>
           </div>
         </div>
-        <LiquidityCharts
+        <DlmmLiquidityChart
           binRange={binRange}
           binRangeRef={binRangeRef}
           binShiftRef={binShiftRef}

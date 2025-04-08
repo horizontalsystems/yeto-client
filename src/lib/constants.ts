@@ -1,3 +1,6 @@
+export const SOL_TOKEN_MINT = 'So11111111111111111111111111111111111111112'
+export const USDC_TOKEN_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+
 export const DLMM_PROGRAM_IDS = {
   devnet: 'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',
   'mainnet-beta': 'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo'

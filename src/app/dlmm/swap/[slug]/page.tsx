@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { DlmmCreateTabs } from '@/components/dlmm/dlmm-create-tabs'
+import { DlmmSwap } from '@/components/swap/dlmm-swap'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,9 +9,8 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ pool?: string }> }) {
-  const poolAddress = (await searchParams).pool
-
+export default async function Dlmm({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
       <Breadcrumb className="mt-10 mb-4">
@@ -23,13 +22,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
-            <BreadcrumbPage>Pool creation</BreadcrumbPage>
+            <BreadcrumbPage>Swap</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="rounded-lg border">
-        <DlmmCreateTabs poolAddress={poolAddress} />
+        <DlmmSwap poolAddress={slug} />
       </div>
     </div>
   )

@@ -15,7 +15,7 @@ interface Pair {
   mint_y_url: string
 }
 
-export function DlmmFormTabs({ poolAddress: address }: { poolAddress?: string }) {
+export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string }) {
   const [tab, setTab] = useState(address ? 'liquidity' : 'pool')
   const [poolAddress, setPoolAddress] = useState<string | undefined>(address)
   const [pair, setPair] = useState<Pair>()

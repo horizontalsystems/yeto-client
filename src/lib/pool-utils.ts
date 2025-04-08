@@ -1,7 +1,8 @@
 import DLMM, { StrategyType } from '@meteora-ag/dlmm'
-import { Connection, Keypair, PublicKey } from '@solana/web3.js'
-import { getMint } from '@solana/spl-token'
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
+import { getAssociatedTokenAddressSync, getMint } from '@solana/spl-token'
 import { BN } from '@coral-xyz/anchor'
+import { SOL_TOKEN_MINT } from '@/lib/constants'
 
 export async function createBalancePosition(
   pool: DLMM,
@@ -47,5 +48,21 @@ export async function createBalancePosition(
   return {
     createPositionTx,
     newBalancePosition
+  }
+}
+
+export async function getBalance(connection: Connection, walletPubkey: PublicKey, tokenPubkey: PublicKey) {
+  try {
+    if (tokenPubkey.toBase58() === SOL_TOKEN_MINT) {
+      const balance = await connection.getBalance(walletPubkey, 'confirmed')
+      return balance / LAMPORTS_PER_SOL
+    }
+
+    const userTokenAddress = getAssociatedTokenAddressSync(tokenPubkey, walletPubkey)
+    const balance = await connection.getTokenAccountBalance(userTokenAddress, 'confirmed')
+    return balance.value.uiAmount || 0
+  } catch (e) {
+    console.log(e)
+    return 0
   }
 }

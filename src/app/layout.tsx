@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { type Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { SolanaProvider } from '@/components/solana-provider'
+import { Toaster } from '@/components/ui/sonner'
 import { Header } from '@/components/header'
 
 import '@/styles/globals.css'
@@ -31,6 +32,7 @@ export default function RootLayout({ children, modal }: Readonly<{ children: Rea
           <Header />
           {modal}
           {children}
+          <Toaster />
         </SolanaProvider>
       </body>
     </html>

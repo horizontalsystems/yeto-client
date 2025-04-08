@@ -61,3 +61,7 @@ export function percentageChange(oldNumber: number, newNumber: number) {
 
   return -((oldNumber - newNumber) / oldNumber) * 100
 }
+
+export function percentage(percent: number, total: number) {
+  return ((percent / 100) * total)
+}
