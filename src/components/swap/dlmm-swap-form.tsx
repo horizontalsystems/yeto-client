@@ -1,6 +1,7 @@
 import DLMM from '@meteora-ag/dlmm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ButtonConnect } from '@/components/button-connect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
@@ -219,7 +220,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
         {inputX}
         <div className="flex items-center justify-between px-1">
           <div className="text-muted-foreground flex text-xs">
-            Balance: {balances.valueX === null ? <Skeleton className="ms-2 h-5 w-20" /> : balances.valueX}
+            Balance: {balances.valueX === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueX}
           </div>
           <div className="flex space-x-1">
             <ToggleGroup type="single" className="flex space-x-2" disabled={formState.submitting}>
@@ -267,15 +268,19 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
         {inputY}
         <div className="px-1">
           <div className="text-muted-foreground flex text-xs">
-            Balance: {balances.valueY === null ? <Skeleton className="h-5 w-20" /> : balances.valueY}
+            Balance: {balances.valueY === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueY}
           </div>
         </div>
       </div>
       <hr className="divider" />
       <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <Button type="submit" className="text-bright cursor-pointer" disabled={formState.submitting}>
-          Swap
-        </Button>
+        {connected ? (
+          <Button type="submit" className="text-bright cursor-pointer" disabled={formState.submitting}>
+            Swap
+          </Button>
+        ) : (
+          <ButtonConnect />
+        )}
         <div className="text-muted-foreground space-y-1 text-right text-xs">
           <p>
             1 {base} ≈ {pricePerToken} {quote}
