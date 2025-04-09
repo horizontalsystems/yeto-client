@@ -6,17 +6,21 @@ type SelectProps = {
   placeholder?: string
   onChange: (value: number) => void
   infoText?: string
-  defaultValue?: string,
+  defaultValue?: string
   disabled?: boolean
 }
 
 export function SelectNumber({ items, placeholder, onChange, infoText, defaultValue, disabled }: SelectProps) {
   return (
-    <Select onValueChange={(value: string) => onChange(parseFloat(value))} defaultValue={defaultValue} disabled={disabled}>
-      <SelectTrigger className="w-full">
+    <Select
+      onValueChange={(value: string) => onChange(parseFloat(value))}
+      defaultValue={defaultValue}
+      disabled={disabled}
+    >
+      <SelectTrigger className="h-11 w-full">
         <div className="relative flex grow-1 justify-between">
-          <div className="text-muted-foreground flex items-center">
-            {placeholder} {infoText && <Info className="text-muted-foreground ms-2" />}
+          <div className="text-gray flex items-center">
+            {placeholder} {infoText && <Info className="text-gray ms-2" />}
           </div>
           <div className="ps-5">
             <SelectValue />

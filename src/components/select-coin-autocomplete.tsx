@@ -47,7 +47,7 @@ export function SelectCoinAutocomplete({ onSelect, error, placeholder, disabled 
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild className={cn({ 'border-red-400': error })} disabled={disabled}>
+      <PopoverTrigger asChild className={cn('h-11', { 'border-red-400': error })} disabled={disabled}>
         <Button variant="outline" role="combobox" className="w-full justify-start">
           {selected ? (
             <>
@@ -55,7 +55,7 @@ export function SelectCoinAutocomplete({ onSelect, error, placeholder, disabled 
               <span>{selected.symbol}</span>
             </>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-gray">{placeholder}</span>
           )}
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>

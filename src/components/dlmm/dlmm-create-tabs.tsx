@@ -24,6 +24,7 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
   })
 
   useEffect(() => {
+    if (!poolAddress) return
     setLiqState({ loading: true })
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${poolAddress}`)
       .then(res => res.json())

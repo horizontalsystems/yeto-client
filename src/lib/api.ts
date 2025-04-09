@@ -30,7 +30,7 @@ export async function searchCoins(query: string) {
         return {}
       }
 
-      return results.hits.map((item: { document: ApiCoinItem }) => {
+      const coinList = results.hits.map((item: { document: ApiCoinItem }) => {
         return {
           address: item.document.address,
           name: item.document.name,
@@ -38,6 +38,15 @@ export async function searchCoins(query: string) {
           logoURI: item.document.logoURI
         }
       })
+      // Todo: devnet token, for testing only, remove
+      coinList.unshift({
+        address: 'CpZKSV4mVAM7EjR5vYv5kLBr6cZCG5WyhHCw68SSwtUx',
+        name: 'CpZ Devnet',
+        symbol: 'CpZ',
+        logoURI: 'https://statics.solscan.io/solscan-img/solana_icon.svg'
+      })
+
+      return coinList
     })
 
   return {

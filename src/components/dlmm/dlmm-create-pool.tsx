@@ -2,19 +2,20 @@
 
 import DLMM from '@meteora-ag/dlmm'
 import { SyntheticEvent, useState } from 'react'
-import { Info } from 'lucide-react'
+import { ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
 import { ApiCoinItem } from '@/lib/api'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { derivePresetParameter, u16ToBuffer } from '@/lib/utils'
+import { cn, derivePresetParameter, u16ToBuffer } from '@/lib/utils'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { BN } from '@coral-xyz/anchor'
 import { DLMM_PROGRAM_IDS } from '@/lib/constants'
-import { omit, parseInt } from 'es-toolkit/compat'
+import { omit } from 'es-toolkit/compat'
 import { ButtonConnect } from '@/components/button-connect'
+import { toast } from 'sonner'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
@@ -25,8 +26,8 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [base, setBase] = useState<ApiCoinItem>()
   const [quote, setQuote] = useState<ApiCoinItem>()
-  const [binStep, setBinStep] = useState(0)
-  const [baseFee, setBaseFee] = useState(0)
+  const [binStep, setBinStep] = useState(1)
+  const [baseFee, setBaseFee] = useState(0.01)
   const [initialPrice, setInitialPrice] = useState(1)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [formState, setFormState] = useState<{ submitting: boolean; newPoolAddress?: string; error?: string }>({
@@ -47,6 +48,10 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
       return setErrors({ ...errors, quote: 'Quote is required' })
     }
 
+    if (!initialPrice || initialPrice < 0) {
+      return setErrors({ ...errors, initialPrice: 'Initial price is required' })
+    }
+
     try {
       setFormState({ submitting: true })
 
@@ -65,6 +70,7 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
 
       const accountInfo = await connection.getAccountInfo(poolAddress)
       if (accountInfo) {
+        setFormState({ submitting: false })
         return setErrors({ ...errors, poolExists: 'Pool already exists. You can proceed to deposit into the pool.' })
       } else {
         setErrors({ ...omit(errors, ['poolExists']) })
@@ -79,14 +85,26 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
         new BN(binStep),
         new BN(baseFactor),
         presetParamAddress,
-        new BN(initialPrice || 1),
+        new BN(initialPrice),
         { cluster: 'devnet', programId }
       )
 
       const signature = await sendTransaction(rawTx, connection)
-      console.log('signature', signature)
       setFormState({ submitting: false, newPoolAddress: poolAddress.toBase58() })
+
       onCreate(poolAddress.toBase58())
+
+      toast.success('Pool created', {
+        duration: 5000,
+        description: (
+          <div className="flex flex-row items-center">
+            <span>Solscan :</span>
+            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
+              <ExternalLink size="18" />
+            </a>
+          </div>
+        )
+      })
     } catch (e) {
       console.log(e)
       let error = 'Failed to create pool'
@@ -94,7 +112,10 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
         error = e.message
       }
 
-      setFormState({ submitting: false, error })
+      setFormState({ submitting: false })
+      toast.error('Failed to create pool', {
+        description: error
+      })
     }
   }
 
@@ -106,6 +127,11 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
   const onSelectQuote = (v: ApiCoinItem) => {
     setQuote(v)
     setErrors({ ...omit(errors, ['quote']) })
+  }
+
+  const onChangeInitialPrice = (v: string) => {
+    setErrors({ ...omit(errors, ['initialPrice']) })
+    setInitialPrice(parseFloat(v))
   }
 
   const actions = () => {
@@ -140,7 +166,7 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
   return (
     <form className="p-6" onSubmit={handleSubmit}>
       <div className="mb-6">
-        <div className="mb-3">Select Tokens</div>
+        <div className="text-leah mb-3">Select Tokens</div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <SelectCoinAutocomplete
@@ -161,8 +187,9 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
             {errors.quote && <div className="mt-1 text-sm text-red-400">{errors.quote}</div>}
           </div>
         </div>
-        <div className="text-muted-foreground pt-2 text-sm">
-          For SOL-USDC, SOL is usually the Base token, and USDC is the Quote token representing the price of SOL.
+        <div className="text-gray pt-2 text-sm">
+          SOL or stables (e.g. USDC, USDT) are usually used as the Quote token, which represents the price used to trade
+          the Base token.
         </div>
       </div>
 
@@ -170,27 +197,33 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
         <div className="grid grid-cols-2 gap-3">
           <SelectNumber
             placeholder="Base Fee"
+            defaultValue="0.01"
             items={['0.01', '0.02', '0.03', '0.04', '0.05', '0.06']}
             onChange={setBaseFee}
             disabled={formState.submitting}
           />
           <SelectNumber
+            defaultValue="1"
             placeholder="Bin Step"
-            items={['1', '5', '8', '10', '15', '25']}
+            items={['1', '5', '8', '10', '16', '80', '100']}
             onChange={setBinStep}
             disabled={formState.submitting}
           />
         </div>
       </div>
       <div className="mb-6">
-        <div className="mb-3">Input Price</div>
+        <div className="text-leah mb-3">Input Price</div>
         <Input
+          required
           type="number"
+          className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
           placeholder="1"
-          onChange={v => setInitialPrice(parseInt(v.target.value))}
+          step="0.0001"
+          onChange={v => onChangeInitialPrice(v.target.value)}
           disabled={formState.submitting}
         />
-        <div className="text-muted-foreground pt-2 text-sm">
+        {errors.initialPrice && <div className="mt-1 text-sm text-red-400">{errors.initialPrice}</div>}
+        <div className="text-gray pt-2 text-sm">
           Please verify that this price matches the current market price to avoid losing initial liquidity.
         </div>
       </div>
