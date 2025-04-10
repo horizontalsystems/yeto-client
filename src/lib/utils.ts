@@ -33,6 +33,10 @@ export function toPercent(value: number | string) {
   return (typeof value === 'string' ? parseFloat(value) : value).toFixed(2) + '%'
 }
 
+export function toRounded(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
 export function u16ToBuffer(value: number): Buffer {
   const buffer = Buffer.alloc(2)
   buffer.writeUInt16LE(value, 0)

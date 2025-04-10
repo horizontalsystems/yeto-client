@@ -75,7 +75,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
       setFormState({ submitting: true })
 
       const dlmmPool = await dlmmInstance
-      const swapAmount = new BN(amountX * 10 ** dlmmPool.tokenX.decimal)
+      const swapAmount = new BN(amountX * 10 ** dlmmPool.tokenX.mint.decimals)
 
       const swapYtoX = true // Quote token as input
       const binArrays = await dlmmPool.getBinArrayForSwap(swapYtoX)
@@ -267,7 +267,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
       <div className="mb-6 space-y-2">
         {inputY}
         <div className="px-1">
-          <div className="text-muted-foreground flex text-xs">
+          <div className="text-gray flex text-xs">
             Balance: {balances.valueY === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueY}
           </div>
         </div>
@@ -281,7 +281,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
         ) : (
           <ButtonConnect />
         )}
-        <div className="text-muted-foreground space-y-1 text-right text-xs">
+        <div className="text-gray space-y-1 text-right text-xs">
           <p>
             1 {base} ≈ {pricePerToken} {quote}
           </p>

@@ -6,6 +6,8 @@ import DLMM, {
   getPriceOfBinByBinId,
   StrategyType
 } from '@meteora-ag/dlmm'
+import { toast } from 'sonner'
+import { omit } from 'es-toolkit/compat'
 import { useDebouncedCallback } from 'use-debounce'
 import { BN } from '@coral-xyz/anchor'
 import { ExternalLink } from 'lucide-react'
@@ -15,16 +17,15 @@ import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { ChangeEvent, SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { createBalancePosition } from '@/lib/pool-utils'
+import { createBalancePosition, getBalance } from '@/lib/pool-utils'
+import { Skeleton } from '@/components/ui/skeleton'
+import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
-import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
-import { binIdToBinArrayIndex, cn, percentageChange } from '@/lib/utils'
-import { toast } from 'sonner'
-import { omit } from 'es-toolkit/compat'
+import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } from '@/lib/utils'
 
 export interface AddLiquidityProps {
   address: string
@@ -58,10 +59,13 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
 
   const strategies = ['Spot', 'Bid-Ask']
   const [strategy, setStrategy] = useState<string>(strategies[0])
+  const [autoFill, setAutoFill] = useState(false)
 
+  const autoFillRef = useRef<number>(1)
   const binRangeRef = useRef<number[]>(binRange)
   const binShiftRef = useRef<number>(0)
 
+  const [balances, setBalances] = useState<{ valueX?: number; valueY?: number }>({})
   const baseAmountRef = useRef<HTMLInputElement>(null)
   const quoteAmountRef = useRef<HTMLInputElement>(null)
   const [priceRange, setPriceRange] = useState<MinMaxPrices>({
@@ -155,12 +159,24 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const endPriceChange = percentageChange(binPrice, endPrice.toNumber())
 
     setPriceRange({
-      minPrice: startPrice.toNumber(),
-      minPriceChange: (startPriceChange || 0).toFixed(2),
+      minPrice: (startPrice).toNumber(),
+      minPriceChange: toRounded(startPriceChange || 0),
       maxPrice: endPrice.toNumber(),
-      maxPriceChange: (endPriceChange || 0).toFixed(2)
+      maxPriceChange: toRounded(endPriceChange || 0)
     })
   }, [])
+
+  const syncBalance = useCallback(async () => {
+    const dlmmPool = await dlmmInstance
+    if (!walletPubKey) {
+      return
+    }
+
+    setBalances({
+      valueX: await getBalance(connection, walletPubKey, dlmmPool.tokenX.publicKey),
+      valueY: await getBalance(connection, walletPubKey, dlmmPool.tokenY.publicKey)
+    })
+  }, [connection, dlmmInstance, walletPubKey])
 
   const calculateBins = useCallback(async () => {
     const pool = await dlmmInstance
@@ -211,35 +227,66 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     setInitializing(true)
     syncBins()
       .then(calculateBins)
+      .then(syncBalance)
       .finally(() => {
         setInitializing(false)
       })
-  }, [address, calculateBins, syncBins])
+  }, [address, calculateBins, syncBalance, syncBins])
 
-  const onChangeBaseAmount = async (v: ChangeEvent<HTMLInputElement>) => {
+  const onChangeBaseAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountX']) })
 
-    const value = parseInt(v.target.value) || 0
+    const value = parseFloat(amount) || 0
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (quoteAmountRef.current) {
-      quoteAmountRef.current.value = (parseFloat(activeBin.price) * value).toString()
+      quoteAmountRef.current.value = toRounded(parseFloat(activeBin.price) * value).toString()
     }
   }
 
-  const onChangeQuoteAmount = async (v: ChangeEvent<HTMLInputElement>) => {
+  const onMaxBaseAmount = () => {
+    if (balances.valueX !== undefined && baseAmountRef.current) {
+      baseAmountRef.current.value = String(balances.valueX)
+      onChangeBaseAmount(baseAmountRef.current.value)
+    }
+  }
+
+  const onChangeQuoteAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountY']) })
 
-    const value = parseInt(v.target.value) || 0
+    const value = parseFloat(amount) || 0
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (baseAmountRef.current) {
-      baseAmountRef.current.value = (value * parseFloat(activeBin.price)).toString()
+      baseAmountRef.current.value = toRounded(value * parseFloat(activeBin.price)).toString()
+    }
+  }
+
+  const onMaxQuoteAmount = () => {
+    if (balances.valueY !== undefined && quoteAmountRef.current) {
+      quoteAmountRef.current.value = String(balances.valueY)
+      onChangeQuoteAmount(quoteAmountRef.current.value)
     }
   }
 
   const onChangeAutoFill = (checked: boolean) => {
-    console.log(checked)
+    setAutoFill(checked)
+    if (balances.valueX === undefined || balances.valueY === undefined || !baseAmountRef.current) {
+      return
+    }
+
+    if (checked) {
+      const newAmount = toRounded(percentage(autoFillRef.current, balances.valueX)).toString()
+      baseAmountRef.current.value = newAmount
+      onChangeBaseAmount(newAmount)
+    }
+  }
+
+  const onChangeAutoFillPercent = (percent: string) => {
+    autoFillRef.current = parseInt(percent)
+    if (autoFill) {
+      onChangeAutoFill(true)
+    }
   }
 
   if (initializing) {
@@ -254,18 +301,16 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
           <div className="flex gap-2">
             <div className="flex items-center">
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
-              <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked />
+              <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
             </div>
-            <Select defaultValue="1%">
+            <Select defaultValue="1" onValueChange={onChangeAutoFillPercent}>
               <SelectTrigger className="h-8 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="min-w-0">
-                <SelectGroup>
-                  <SelectItem value="1%">1%</SelectItem>
-                  <SelectItem value="2%">2%</SelectItem>
-                  <SelectItem value="3%">3%</SelectItem>
-                </SelectGroup>
+                <SelectItem value="1">1%</SelectItem>
+                <SelectItem value="2">2%</SelectItem>
+                <SelectItem value="3">3%</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -277,7 +322,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
       <div className="mb-6 grid gap-6 md:grid-cols-2">
         <div className="flex grow-1 flex-col">
           <div className="relative">
-            <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
+            <div className="absolute top-3 left-0 ms-3 flex items-center">
               <img src={mintXUrl} alt="" width="24" height="24" />
               <span className="ms-2">{base}</span>
             </div>
@@ -286,16 +331,31 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
               type="text"
               placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
-              onChange={onChangeBaseAmount}
+              onChange={v => onChangeBaseAmount(v.target.value)}
               disabled={formState.submitting}
             />
+            <div className="mt-1 flex justify-between">
+              <div className="text-gray flex items-center text-sm">
+                <span className="me-1">Balance</span>
+                {balances.valueX === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.valueX}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="bg-bran h-6 cursor-pointer px-2 text-xs"
+                onClick={onMaxBaseAmount}
+              >
+                Max
+              </Button>
+            </div>
           </div>
           {errors.amountX && <span className="mt-1 text-sm text-red-400">{errors.amountX}</span>}
         </div>
 
         <div className="flex grow-1 flex-col">
           <div className="relative">
-            <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
+            <div className="absolute top-3 left-0 ms-3 flex items-center">
               <img src={mintYUrl} alt="" width="24" height="24" />
               <span className="ms-2">{quote}</span>
             </div>
@@ -304,9 +364,24 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
               type="text"
               placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
-              onChange={onChangeQuoteAmount}
+              onChange={v => onChangeQuoteAmount(v.target.value)}
               disabled={formState.submitting}
             />
+            <div className="mt-1 flex justify-between">
+              <div className="text-gray flex items-center text-sm">
+                <span className="me-1">Balance</span>
+                {balances.valueY === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.valueY}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="bg-bran h-6 cursor-pointer px-2 text-xs"
+                onClick={onMaxQuoteAmount}
+              >
+                Max
+              </Button>
+            </div>
           </div>
           {errors.amountY && <span className="mt-1 text-sm text-red-400">{errors.amountY}</span>}
         </div>
