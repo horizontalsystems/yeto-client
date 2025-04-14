@@ -46,8 +46,14 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-        />
+        >
+          <svg width="22" height="12" viewBox="0 0 22 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0.5" width="21" height="12" rx="6" fill="#F5F5F5"/>
+            <rect x="8.5" y="4" width="1" height="4" fill="black"/>
+            <rect x="10.5" y="4" width="1" height="4" fill="black"/>
+            <rect x="12.5" y="4" width="1" height="4" fill="black"/>
+          </svg>
+        </SliderPrimitive.Thumb>
       ))}
     </SliderPrimitive.Root>
   )

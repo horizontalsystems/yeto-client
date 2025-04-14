@@ -159,7 +159,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const endPriceChange = percentageChange(binPrice, endPrice.toNumber())
 
     setPriceRange({
-      minPrice: (startPrice).toNumber(),
+      minPrice: startPrice.toNumber(),
       minPriceChange: toRounded(startPriceChange || 0),
       maxPrice: endPrice.toNumber(),
       maxPriceChange: toRounded(endPriceChange || 0)
@@ -246,7 +246,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
 
   const onMaxBaseAmount = () => {
     if (balances.valueX !== undefined && baseAmountRef.current) {
-      baseAmountRef.current.value = String(balances.valueX)
+      baseAmountRef.current.value = balances.valueX.toString()
       onChangeBaseAmount(baseAmountRef.current.value)
     }
   }
@@ -264,7 +264,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
 
   const onMaxQuoteAmount = () => {
     if (balances.valueY !== undefined && quoteAmountRef.current) {
-      quoteAmountRef.current.value = String(balances.valueY)
+      quoteAmountRef.current.value = balances.valueY.toString()
       onChangeQuoteAmount(quoteAmountRef.current.value)
     }
   }
@@ -479,7 +479,13 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
         </div>
         <div className="w-4/12 md:w-1/12">
           <Label className="mb-2">Bins</Label>
-          <Input type="text" placeholder="69" className="h-11" value={Math.abs(binRange[0]) + binRange[1]} disabled />
+          <Input
+            type="text"
+            placeholder="69"
+            className="h-11"
+            value={Math.abs(binRangeRef.current[0]) + 1 + binRangeRef.current[1]}
+            disabled
+          />
         </div>
       </div>
       {connected ? (

@@ -76,6 +76,7 @@ function DlmmLiquidityChart({
     setBinsCopy(bins)
   }, [bins])
 
+  // Strategy
   useEffect(() => {
     const ctx = strategyCanvasRef.current?.getContext('2d')
     if (!ctx) return
@@ -106,6 +107,7 @@ function DlmmLiquidityChart({
     chart.update()
   }, [binsCopy, strategy, activeBinId, binRangeRef, binShiftRef])
 
+  // Liquidity
   useEffect(() => {
     const ctx = liquidityCanvasRef.current?.getContext('2d')
     if (!ctx) return
@@ -145,8 +147,8 @@ function DlmmLiquidityChart({
         </div>
         <Slider
           defaultValue={[0]}
-          min={binRange[0]}
-          max={binRange[1]}
+          min={binRangeRef.current[0]}
+          max={binRangeRef.current[1]}
           step={1}
           className="w-full"
           onValueChange={onShiftBin}
