@@ -2,18 +2,20 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Info } from 'lucide-react'
 
 type SelectProps = {
-  items: string[]
+  items: string[] | number[]
   placeholder?: string
   onChange: (value: number) => void
   infoText?: string
   defaultValue?: string
+  value?: string
   disabled?: boolean
 }
 
-export function SelectNumber({ items, placeholder, onChange, infoText, defaultValue, disabled }: SelectProps) {
+export function SelectNumber({ items, placeholder, onChange, infoText, defaultValue, value, disabled }: SelectProps) {
   return (
     <Select
-      onValueChange={(value: string) => onChange(parseFloat(value))}
+      onValueChange={(val: string) => onChange(parseFloat(val))}
+      value={value}
       defaultValue={defaultValue}
       disabled={disabled}
     >
@@ -23,14 +25,16 @@ export function SelectNumber({ items, placeholder, onChange, infoText, defaultVa
             {placeholder} {infoText && <Info className="text-gray ms-2" />}
           </div>
           <div className="ps-5">
-            <SelectValue />
+            <SelectValue>
+              {value}
+            </SelectValue>
           </div>
         </div>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
           {items.map((item, i) => (
-            <SelectItem key={i} value={item}>
+            <SelectItem key={String(i)} value={String(item)}>
               {item}
             </SelectItem>
           ))}

@@ -16,13 +16,15 @@ import { DLMM_PROGRAM_IDS } from '@/lib/constants'
 import { omit } from 'es-toolkit/compat'
 import { ButtonConnect } from '@/components/button-connect'
 import { toast } from 'sonner'
+import { baseFeePercentages, binStepsByBaseFee } from '@/lib/pool-utils'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
   onClickNext: (address: string) => void
+  fetchingPair: boolean
 }
 
-export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
+export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCreatePoolProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [base, setBase] = useState<ApiCoinItem>()
   const [quote, setQuote] = useState<ApiCoinItem>()
@@ -77,6 +79,7 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
       }
 
       const presetParamAddress = derivePresetParameter(programId, binStep, baseFactor)
+      const binIdFromPrice = DLMM.getBinIdFromPrice(initialPrice, binStep, true)
       const rawTx = await DLMM.createLbPair(
         connection,
         walletPubKey,
@@ -85,7 +88,7 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
         new BN(binStep),
         new BN(baseFactor),
         presetParamAddress,
-        new BN(initialPrice),
+        new BN(binIdFromPrice),
         { cluster: 'devnet', programId }
       )
 
@@ -134,6 +137,14 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
     setInitialPrice(parseFloat(v))
   }
 
+  const onChangeBaseFee = (f: number) => {
+    setBaseFee(f)
+    const binStepFirst = binStepsByBaseFee(f)[0]
+    if (binStepFirst) {
+      setBinStep(binStepFirst)
+    }
+  }
+
   const actions = () => {
     const newPoolAddress = formState.newPoolAddress
     if (newPoolAddress) {
@@ -143,6 +154,7 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
           type="button"
           className="mt-6 cursor-pointer"
           onClick={() => onClickNext(newPoolAddress)}
+          disabled={fetchingPair}
         >
           Next
         </Button>
@@ -198,15 +210,15 @@ export function DlmmCreatePool({ onCreate, onClickNext }: DlmmCreatePoolProps) {
           <SelectNumber
             placeholder="Base Fee"
             defaultValue="0.01"
-            items={['0.01', '0.02', '0.03', '0.04', '0.05', '0.06']}
-            onChange={setBaseFee}
+            items={baseFeePercentages}
+            onChange={onChangeBaseFee}
             disabled={formState.submitting}
           />
           <SelectNumber
-            defaultValue="1"
+            value={binStep.toString()}
             placeholder="Bin Step"
-            items={['1', '5', '8', '10', '16', '80', '100']}
-            onChange={setBinStep}
+            items={binStepsByBaseFee(baseFee).map(i => i.toString())}
+            onChange={v => v && setBinStep(v)}
             disabled={formState.submitting}
           />
         </div>

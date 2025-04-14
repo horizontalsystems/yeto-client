@@ -66,3 +66,44 @@ export async function getBalance(connection: Connection, walletPubkey: PublicKey
     return 0
   }
 }
+
+export const baseFeePercentages = [0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.6, 0.8, 1, 2, 3]
+
+export function binStepsByBaseFee(baseFee: number) {
+  switch (baseFee) {
+    case 0.01:
+      return [1, 5, 8, 10, 16, 80, 100]
+    case 0.02:
+      return [2, 5, 10, 80]
+    case 0.03:
+      return [2, 5, 10, 16, 80]
+    case 0.04:
+      return [4, 5, 10, 80, 100]
+    case 0.05:
+      return [8, 50, 80, 100]
+    case 0.1:
+      return [10, 50, 80, 100]
+    case 0.15:
+      return [15, 75, 80, 100]
+    case 0.2:
+      return [20, 80, 100, 125]
+    case 0.25:
+      return [25, 80, 100, 125, 200]
+    case 0.3:
+      return [30, 50, 100, 150, 200]
+    case 0.4:
+      return [50, 100, 160, 200, 400]
+    case 0.6:
+      return [80, 100]
+    case 0.8:
+      return [80, 100, 160, 200]
+    case 1:
+      return [80, 100, 125, 200, 250, 400]
+    case 2:
+      return [100, 200, 250, 400]
+    case 5:
+      return [80, 100, 125, 250, 400]
+    default:
+      return []
+  }
+}

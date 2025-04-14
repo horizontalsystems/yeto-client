@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useCallback, useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DlmmCreatePool } from '@/components/dlmm/dlmm-create-pool'
 import { DlmmAddLiquidity } from '@/components/dlmm/dlmm-add-liquidity'
 import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
+import { sleep } from '@/lib/utils'
 
 interface Pair {
   address: string
@@ -23,19 +25,30 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
     loading: !!address
   })
 
-  useEffect(() => {
-    if (!poolAddress) return
+  const fetchPair = useCallback(async (addr: string, retry?: number) => {
     setLiqState({ loading: true })
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${poolAddress}`)
+
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${addr}`)
       .then(res => res.json())
       .then(data => {
         setPair(data)
         setLiqState({ loading: false })
       })
-      .catch(err => {
-        setLiqState({ loading: false, error: err.message })
+      .catch(async err => {
+        if (retry && retry <= 3) {
+          await sleep(1000)
+          await fetchPair(addr, retry + 1)
+        } else {
+          setLiqState({ loading: false, error: err.message })
+        }
       })
-  }, [poolAddress])
+  }, [])
+
+  useEffect(() => {
+    if (poolAddress) {
+      fetchPair(poolAddress).catch(console.log)
+    }
+  }, [])
 
   const renderLiqTab = () => {
     if (liqState.loading) {
@@ -52,7 +65,9 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
         mintYUrl={pair.mint_y_url}
       />
     ) : (
-      'Pair not found'
+      <div className="mx-auto w-full p-6">
+        Pair not found or not created yet <Link href={`/dlmm/create?pool=${poolAddress}`}></Link>
+      </div>
     )
   }
 
@@ -62,6 +77,7 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
 
   const onClickNext = (address: string) => {
     setPoolAddress(address)
+    fetchPair(address, 1).catch(console.log)
     setTab('liquidity')
   }
 
@@ -78,7 +94,7 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
         </div>
       </TabsList>
       <TabsContent value="pool" forceMount>
-        <DlmmCreatePool onCreate={onCreatePool} onClickNext={onClickNext} />
+        <DlmmCreatePool onCreate={onCreatePool} onClickNext={onClickNext} fetchingPair={liqState.loading} />
       </TabsContent>
       <TabsContent value="liquidity" forceMount>
         {renderLiqTab()}

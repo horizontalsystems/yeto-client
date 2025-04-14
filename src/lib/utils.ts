@@ -69,3 +69,10 @@ export function percentageChange(oldNumber: number, newNumber: number) {
 export function percentage(percent: number, total: number) {
   return (percent / 100) * total
 }
+
+export function sleep(timeout: number = 1000): Promise<void> {
+  console.log('Sleeping', timeout)
+  return new Promise<void>(resolve => {
+    setTimeout(resolve, timeout)
+  })
+}
