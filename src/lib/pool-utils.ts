@@ -101,7 +101,7 @@ export function binStepsByBaseFee(baseFee: number) {
       return [80, 100, 125, 200, 250, 400]
     case 2:
       return [100, 200, 250, 400]
-    case 5:
+    case 3:
       return [80, 100, 125, 250, 400]
     default:
       return []
