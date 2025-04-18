@@ -1,27 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { cn, toAmount, toPercent } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 export type Pair = {
   address: string
-  bin_step: number
-  base_fee_percentage: string
-  liquidity: string
-  trade_volume_24h: string
-  apr: string
 }
 
 export type PoolItemProps = {
   name: string
-  tvl: number
-  volume: number
-  apr: number
+  poolAddress: string
   pairs: Pair[]
 }
 
-export function PoolListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
+export function MyPoolListItem({ name, poolAddress, pairs }: PoolItemProps) {
   const [showPairs, setShowPairs] = useState(false)
 
   const renderPairs = () => {
@@ -29,25 +22,25 @@ export function PoolListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
       <div>
         <div className="text-andy flex">
           <div className="px-6 py-3">#</div>
-          <div className="w-1/4 px-6 py-3">Pools</div>
+          <div className="w-1/4 px-6 py-3">Positions</div>
         </div>
-        {pairs.map((pair, i) => (
-          <Link key={pair.address} href={`/dlmm/${pair.address}`} className="">
+        {pairs.map((position, i) => (
+          <Link key={position.address} href={`/dlmm/${poolAddress}/${position.address}`}>
             <div className="flex cursor-pointer border-t">
               <div className="px-6 py-4">{i + 1}</div>
               <div className="w-1/4 px-6 py-4 font-medium">
                 <span className="text-sm">
                   <span className="">Bin Step</span>
-                  <span className="text-leah ms-1">{pair.bin_step}</span>
+                  <span className="text-leah ms-1">0</span>
                 </span>
                 <span className="ms-3 text-sm">
                   <span className="text-steel">Fee</span>
-                  <span className="text-leah ms-1">{parseFloat(pair.base_fee_percentage) * 100}%</span>
+                  <span className="text-leah ms-1">0%</span>
                 </span>
               </div>
-              <div className="w-1/4 px-6 py-4">{toAmount(pair.liquidity)}</div>
-              <div className="w-1/4 px-6 py-4">{toAmount(pair.trade_volume_24h)}</div>
-              <div className="w-1/4 px-6 py-4">{toPercent(pair.apr)}</div>
+              <div className="w-1/4 px-6 py-4">0</div>
+              <div className="w-1/4 px-6 py-4">0</div>
+              <div className="w-1/4 px-6 py-4">0</div>
             </div>
           </Link>
         ))}
@@ -63,11 +56,11 @@ export function PoolListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
       >
         <div className="text-leah w-1/4 px-6 py-4 font-medium">
           <span>{name}</span>
-          <span className="bg-bran ms-2 rounded-2xl px-3 py-1 break-keep">{pairs.length} pools</span>
+          <span className="bg-bran ms-2 rounded-2xl px-3 py-1 break-keep">{pairs.length} positions</span>
         </div>
-        <div className="w-1/4 px-6 py-4">{toAmount(tvl)}</div>
-        <div className="w-1/4 px-6 py-4">{toAmount(volume)}</div>
-        <div className="w-1/4 px-6 py-4">{toPercent(apr)}</div>
+        <div className="w-1/4 px-6 py-4">tvl</div>
+        <div className="w-1/4 px-6 py-4">volume</div>
+        <div className="w-1/4 px-6 py-4">apr</div>
       </div>
       {showPairs && renderPairs()}
     </div>

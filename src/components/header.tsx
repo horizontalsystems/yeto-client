@@ -6,7 +6,7 @@ import { ButtonConnect } from '@/components/button-connect'
 export function Header() {
   const navigation = [
     { name: 'Pools', href: '/', current: true },
-    { name: 'My Board', href: '#', current: false },
+    { name: 'My Board', href: '/my-board', current: false },
     { name: 'How it works', href: '#', current: false }
   ]
 
