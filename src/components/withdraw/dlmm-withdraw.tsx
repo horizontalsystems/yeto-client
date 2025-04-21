@@ -23,7 +23,6 @@ export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: st
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${poolAddress}`)
       .then(res => res.json())
       .then(data => {
-        console.log(data)
         setPair(data)
         setFormState({ loading: false })
       })

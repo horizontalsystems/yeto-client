@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { TvlChart } from '@/components/chart/tvl-chart'
 import { Button } from '@/components/ui/button'
 import {
@@ -8,8 +9,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
-import Link from 'next/link'
 import { Plus, Upload } from 'lucide-react'
+import { ButtonClaim } from '@/components/button-claim'
 
 export default async function Withdraw({ params }: { params: Promise<{ slug: string; positionAddress: string }> }) {
   const { slug, positionAddress } = await params
@@ -55,7 +56,7 @@ export default async function Withdraw({ params }: { params: Promise<{ slug: str
           </div>
           <div className="bg-card rounded-xl p-5">
             <div className="flex gap-2">
-              <Button>Claim Fee</Button>
+              <ButtonClaim poolAddress={slug} positionAddress={positionAddress} />
               <Button variant="light" className="cursor-pointer">
                 <Plus /> Add liquidity
               </Button>
