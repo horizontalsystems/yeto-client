@@ -20,6 +20,16 @@ export function DlmmSwap({ poolAddress }: { poolAddress: string }) {
 
   useEffect(() => {
     setFormState({ loading: true })
+
+    setPair({
+      address: '4P1mvdfKPv4nz8tjJT1Gyz81t96hu6R744yMp9Yvyjzm',
+      name: 'SOL-GOLDSOL',
+      mint_x_url: '',
+      mint_y_url: '',
+    })
+    setFormState({ loading: false })
+    return
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${poolAddress}`)
       .then(res => res.json())
       .then(data => {

@@ -1,6 +1,6 @@
 'use client'
 
-import DLMM from '@meteora-ag/dlmm'
+import DLMM from '@yeto/dlmm/ts-client'
 import { SyntheticEvent, useState } from 'react'
 import { ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -79,7 +79,8 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       }
 
       const presetParamAddress = derivePresetParameter(programId, binStep, baseFactor)
-      const binIdFromPrice = DLMM.getBinIdFromPrice(initialPrice, binStep, true)
+      const pricePerLamport = DLMM.getPricePerLamport(base.decimals, quote.decimals, initialPrice);
+      const binIdFromPrice = DLMM.getBinIdFromPrice(pricePerLamport, binStep, true)
       const rawTx = await DLMM.createLbPair(
         connection,
         walletPubKey,
@@ -88,8 +89,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         new BN(binStep),
         new BN(baseFactor),
         presetParamAddress,
-        new BN(binIdFromPrice),
-        { cluster: 'devnet', programId }
+        new BN(binIdFromPrice)
       )
 
       const signature = await sendTransaction(rawTx, connection)

@@ -58,12 +58,13 @@ export function binIdToBinArrayIndex(binId: BN): BN {
   return binId.isNeg() && mod != 0 ? idx.sub(new BN(1)) : idx
 }
 
-export function percentageChange(oldNumber: number, newNumber: number) {
-  if (!oldNumber || !newNumber) {
+export function percentageChange(oldNumber: number | string, newNumber: number | string) {
+  if (oldNumber == null || newNumber == null) {
     return null
   }
 
-  return -((oldNumber - newNumber) / oldNumber) * 100
+  const numeric = Number(oldNumber)
+  return -((numeric - Number(newNumber)) / numeric) * 100
 }
 
 export function percentage(percent: number, total: number) {
@@ -75,4 +76,9 @@ export function sleep(timeout: number = 1000): Promise<void> {
   return new Promise<void>(resolve => {
     setTimeout(resolve, timeout)
   })
+}
+
+export function sortTokenMints(tokenX: PublicKey, tokenY: PublicKey) {
+  const [minKey, maxKey] = tokenX.toBuffer().compare(tokenY.toBuffer()) == 1 ? [tokenY, tokenX] : [tokenX, tokenY]
+  return [minKey, maxKey]
 }

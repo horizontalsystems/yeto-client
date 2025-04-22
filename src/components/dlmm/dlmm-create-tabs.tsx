@@ -28,6 +28,18 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
   const fetchPair = useCallback(async (addr: string, retry?: number) => {
     setLiqState({ loading: true })
 
+    setPair({
+      address: '4P1mvdfKPv4nz8tjJT1Gyz81t96hu6R744yMp9Yvyjzm',
+      name: 'SOL-GOLDSOL',
+      mint_x: 'So11111111111111111111111111111111111111112',
+      mint_x_url: '',
+      mint_y: '7KB5DZ2KptXSUzU5B9oyKGqg7kx68ESMa4p7anN1khUY',
+      mint_y_url: '',
+    })
+
+    setLiqState({ loading: false })
+    return
+
     return fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${addr}`)
       .then(res => res.json())
       .then(data => {

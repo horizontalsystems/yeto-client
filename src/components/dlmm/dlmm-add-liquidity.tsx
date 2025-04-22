@@ -5,7 +5,7 @@ import DLMM, {
   getBinFromBinArray,
   getPriceOfBinByBinId,
   StrategyType
-} from '@meteora-ag/dlmm'
+} from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { omit } from 'es-toolkit/compat'
 import { useDebouncedCallback } from 'use-debounce'
@@ -78,7 +78,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(address), { cluster: 'devnet' }),
+    () => DLMM.create(connection, new PublicKey(address)),
     [connection, address]
   )
 
@@ -108,11 +108,11 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
         dlmmPool,
         amountX,
         amountY,
-        new BN(binRangeRef.current[0] - binShiftRef.current),
-        new BN(binRangeRef.current[1] - binShiftRef.current),
+        new BN(activeBinId + binRangeRef.current[0] - binShiftRef.current),
+        new BN(activeBinId + binRangeRef.current[1] - binShiftRef.current),
         walletPubKey,
         connection,
-        strategy === 'Spot' ? StrategyType.Spot : StrategyType.BidAsk
+        strategy === 'Spot' ? StrategyType.SpotBalanced : StrategyType.BidAskBalanced
       )
 
       const signature = await sendTransaction(createPositionTx, connection, {
@@ -152,16 +152,17 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     setActiveBinId(activeBin.binId)
   }, [dlmmInstance])
 
-  const calculatePriceRange = useCallback(async (minBin: number, maxBin: number, binPrice: number, binStep: number) => {
+  const calculatePriceRange = useCallback(async (minBin: number, maxBin: number, binPrice: string, binStep: number) => {
     const startPrice = getPriceOfBinByBinId(minBin, binStep)
     const startPriceChange = percentageChange(binPrice, startPrice.toNumber())
     const endPrice = getPriceOfBinByBinId(maxBin, binStep)
     const endPriceChange = percentageChange(binPrice, endPrice.toNumber())
+    const pool = await dlmmInstance
 
     setPriceRange({
-      minPrice: startPrice.toNumber(),
+      minPrice: Number(pool.fromPricePerLamport(startPrice.toNumber())),
       minPriceChange: toRounded(startPriceChange || 0),
-      maxPrice: endPrice.toNumber(),
+      maxPrice: Number(pool.fromPricePerLamport(endPrice.toNumber())),
       maxPriceChange: toRounded(endPriceChange || 0)
     })
   }, [])
@@ -218,7 +219,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     }
 
     setBins(newBins)
-    calculatePriceRange(minBinId.toNumber(), maxBinId.toNumber(), parseFloat(activeBin.price), pool.lbPair.binStep)
+    calculatePriceRange(minBinId.toNumber(), maxBinId.toNumber(), activeBin.price, pool.lbPair.binStep)
   }, [address, binRange, calculatePriceRange, dlmmInstance])
 
   const calculateBinsThrottle = useDebouncedCallback(calculateBins, 200)
@@ -240,7 +241,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (quoteAmountRef.current) {
-      quoteAmountRef.current.value = toRounded(parseFloat(activeBin.price) * value).toString()
+      quoteAmountRef.current.value = toRounded(parseFloat(pool.fromPricePerLamport(Number(activeBin.price))) * value).toString()
     }
   }
 
@@ -258,7 +259,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (baseAmountRef.current) {
-      baseAmountRef.current.value = toRounded(value * parseFloat(activeBin.price)).toString()
+      baseAmountRef.current.value = toRounded(value / parseFloat(pool.fromPricePerLamport(Number(activeBin.price)))).toString()
     }
   }
 

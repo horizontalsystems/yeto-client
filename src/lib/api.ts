@@ -2,6 +2,7 @@ export type ApiCoinItem = {
   address: string
   name: string
   symbol: string
+  decimals: number
   logoURI: string
 }
 
@@ -35,6 +36,7 @@ export async function searchCoins(query: string) {
           address: item.document.address,
           name: item.document.name,
           symbol: item.document.symbol,
+          decimals: item.document.decimals,
           logoURI: item.document.logoURI
         }
       })
@@ -51,7 +53,19 @@ export async function searchCoins(query: string) {
         symbol: 'M2',
         logoURI: 'https://statics.solscan.io/solscan-img/solana_icon.svg'
       })
-
+      coinList.unshift({
+        address: '7KB5DZ2KptXSUzU5B9oyKGqg7kx68ESMa4p7anN1khUY',
+        name: 'Solana Gold',
+        symbol: 'GOLDSOL',
+        decimals: 6,
+        logoURI: 'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
+      })
+      coinList.unshift({
+        address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
+        name: 'USDC',
+        symbol: 'USDC',
+        logoURI: ''
+      })
       return coinList
     })
 

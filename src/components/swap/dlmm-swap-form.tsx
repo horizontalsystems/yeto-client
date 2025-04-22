@@ -1,4 +1,3 @@
-import DLMM from '@meteora-ag/dlmm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
@@ -13,6 +12,7 @@ import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { percentage } from '@/lib/utils'
+import DLMM from '@yeto/dlmm/ts-client'
 
 interface DlmmSwapFormProps {
   name: string
@@ -37,7 +37,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(address), { cluster: 'devnet' }),
+    () => DLMM.create(connection, new PublicKey(address)),
     [connection, address]
   )
 
@@ -46,7 +46,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
       const dlmmPool = await dlmmInstance
       const activeBin = await dlmmPool.getActiveBin()
 
-      setPricePerToken(parseFloat(activeBin.pricePerToken))
+      setPricePerToken(parseFloat(dlmmPool.fromPricePerLamport(Number(activeBin.price))))
 
       if (!walletPubKey) {
         return
@@ -75,12 +75,13 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
       setFormState({ submitting: true })
 
       const dlmmPool = await dlmmInstance
-      const swapAmount = new BN(amountX * 10 ** dlmmPool.tokenX.mint.decimals)
+      const swapAmount = new BN(amountX * 10 ** dlmmPool.tokenX.decimal)
 
-      const swapYtoX = true // Quote token as input
-      const binArrays = await dlmmPool.getBinArrayForSwap(swapYtoX)
+      const swapXtoY = true // Quote token as input
+      const binArrays = await dlmmPool.getBinArrayForSwap(swapXtoY)
 
-      const swapQuote = dlmmPool.swapQuote(swapAmount, swapYtoX, new BN(percentage(amountX, slippage)), binArrays)
+      const slippageBps = new BN(Math.round(slippage * 10_000))
+      const swapQuote = dlmmPool.swapQuote(swapAmount, swapXtoY, slippageBps, binArrays)
 
       // Swap
       const swapTx = await dlmmPool.swap({

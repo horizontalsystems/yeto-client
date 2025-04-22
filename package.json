@@ -43,7 +43,8 @@
     "recharts": "^2.15.1",
     "sonner": "^2.0.3",
     "swr": "^2.3.3",
-    "use-debounce": "^10.0.4"
+    "use-debounce": "^10.0.4",
+    "@yeto/dlmm": "github:horizontalsystems/dlmm-contract-sol#e0e5a1e"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
