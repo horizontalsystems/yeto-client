@@ -68,7 +68,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
     }
 
     try {
-      const amountX = parseFloat(amountYRef.current?.value || '')
+      const amountX = parseFloat(amountXRef.current?.value || '')
       if (!amountX) {
         return toast.error('Token x amount is empty')
       }
@@ -122,21 +122,17 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
     }
   }
 
-  const valueToAmount = (value?: string) => {
-    return value ? String((parseFloat(value) / pricePerToken).toFixed(2)) : ''
-  }
-
   const handleChangeX = (v: ChangeEvent<HTMLInputElement>) => {
     const { value } = v.target
     if (amountYRef.current) {
-      amountYRef.current.value = valueToAmount(value)
+      amountYRef.current.value = value ? String((parseFloat(value) * pricePerToken).toFixed(2)) : ''
     }
   }
 
   const handleChangeY = (v: ChangeEvent<HTMLInputElement>) => {
     const { value } = v.target
     if (amountXRef.current) {
-      amountXRef.current.value = valueToAmount(value)
+      amountXRef.current.value = value ? String((parseFloat(value) / pricePerToken).toFixed(2)) : ''
     }
   }
 
