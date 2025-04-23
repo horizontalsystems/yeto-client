@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import DLMM from '@meteora-ag/dlmm'
+import DLMM from '@yeto/dlmm/ts-client'
 import { Plus } from 'lucide-react'
 import { SearchInput } from '@/components/pool/pool-search-input'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,8 @@ import { MyPoolListItem, PoolItemProps } from '@/components/my-board/my-pool-lis
 
 export function MyPoolList() {
   const { publicKey: walletPubKey } = useWallet()
-  const [pools, setPools] = useState<PoolItemProps[]>([])
+  const [positions, setPositions] = useState<PoolItemProps[]>([])
+  const [loading, setLoading] = useState(true)
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
@@ -22,18 +23,17 @@ export function MyPoolList() {
     if (!walletPubKey) {
       return
     }
-    const sync = async () => {
-      const pairs = await DLMM.getAllLbPairPositionsByUser(connection, walletPubKey, {
-        cluster: 'devnet'
-      })
 
+    const sync = async () => {
+      setLoading(true)
+      const pairPositions = await DLMM.getAllLbPairPositionsByUser(connection, walletPubKey)
       const items: PoolItemProps[] = []
 
-      pairs.forEach(pair => {
+      pairPositions.forEach(pairPosition => {
         items.push({
           name: 'ABC-EFG',
-          poolAddress: pair.publicKey.toBase58(),
-          pairs: pair.lbPairPositionsData.map(positionInfo => {
+          poolAddress: pairPosition.publicKey.toBase58(),
+          positions: pairPosition.lbPairPositionsData.map(positionInfo => {
             return {
               address: positionInfo.publicKey.toBase58()
             }
@@ -41,13 +41,14 @@ export function MyPoolList() {
         })
       })
 
-      setPools(items)
+      setPositions(items)
+      setLoading(false)
     }
 
     sync()
   }, [connection, walletPubKey])
 
-  if (!pools.length) {
+  if (loading) {
     return <PoolListSkeleton />
   }
 
@@ -69,9 +70,12 @@ export function MyPoolList() {
           <div className="w-1/4 px-6 py-3 font-medium">24h Vol</div>
           <div className="w-1/4 px-6 py-3 font-medium">24h Fee/TVL</div>
         </div>
-        {pools.map((pool, index: number) => {
-          return <MyPoolListItem key={index} name={pool.name} poolAddress={pool.poolAddress} pairs={pool.pairs} />
+        {positions.map((pool, index: number) => {
+          return (
+            <MyPoolListItem key={index} name={pool.name} poolAddress={pool.poolAddress} positions={pool.positions} />
+          )
         })}
+        {positions.length < 1 && <div className="p-6">No positions</div>}
       </div>
     </div>
   )

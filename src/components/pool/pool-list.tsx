@@ -4,9 +4,10 @@ import useSWR from 'swr'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { SearchInput } from '@/components/pool/pool-search-input'
-import { Pair, PoolListItem } from '@/components/pool/pool-list-item'
+import { PoolListItem } from '@/components/pool/pool-list-item'
 import { Button } from '@/components/ui/button'
 import { PoolListSkeleton } from '@/components/pool/pool-list-skeleton'
+import { Pair } from '../dlmm/dlmm-page'
 
 export type Pool = {
   name: string
@@ -14,7 +15,7 @@ export type Pool = {
 }
 
 const fetchPools = async (query?: string) => {
-  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
+  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
   if (query) {
     apiUrl += `&search_term=${encodeURIComponent(query)}`
   }
@@ -70,9 +71,9 @@ export function PoolList({ query }: { query?: string }) {
 
           for (let i = 0; i < pool.pairs.length; i += 1) {
             const pair = pool.pairs[i]
-            tvl += parseFloat(pair.liquidity)
-            volume += parseFloat(pair.trade_volume_24h)
-            apr += parseFloat(pair.apr)
+            tvl += parseFloat(pair.liquidity) || 0
+            volume += parseFloat(pair.volume['24h']) || 0
+            apr += parseFloat(pair.apr) || 0
             pairs.push(pair)
           }
 

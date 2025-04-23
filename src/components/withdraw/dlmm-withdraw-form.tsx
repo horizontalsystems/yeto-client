@@ -1,4 +1,4 @@
-import DLMM from '@meteora-ag/dlmm'
+import DLMM from '@yeto/dlmm/ts-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
@@ -33,10 +33,7 @@ export function DlmmWithdrawForm({ name, poolAddress, positionAddress }: DlmmWit
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(poolAddress), { cluster: 'devnet' }),
-    [connection, poolAddress]
-  )
+  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
 
   useEffect(() => {
     const sync = async () => {
@@ -75,8 +72,7 @@ export function DlmmWithdrawForm({ name, poolAddress, positionAddress }: DlmmWit
       let withdrawTx = await dlmmPool.removeLiquidity({
         user: walletPubKey,
         position: new PublicKey(positionAddress),
-        fromBinId: fromBinId,
-        toBinId: toBinId,
+        binIds: [fromBinId, toBinId],
         bps: new BN(amountPercent * 100),
         shouldClaimAndClose: true
       })

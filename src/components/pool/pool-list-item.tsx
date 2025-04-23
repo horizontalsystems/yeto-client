@@ -1,17 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { cn, toAmount, toPercent } from '@/lib/utils'
-import Link from 'next/link'
-
-export type Pair = {
-  address: string
-  bin_step: number
-  base_fee_percentage: string
-  liquidity: string
-  trade_volume_24h: string
-  apr: string
-}
+import { Pair } from '@/components/dlmm/dlmm-page'
 
 export type PoolItemProps = {
   name: string
@@ -45,9 +37,9 @@ export function PoolListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
                   <span className="text-leah ms-1">{parseFloat(pair.base_fee_percentage) * 100}%</span>
                 </span>
               </div>
-              <div className="w-1/4 px-6 py-4">{toAmount(pair.liquidity)}</div>
-              <div className="w-1/4 px-6 py-4">{toAmount(pair.trade_volume_24h)}</div>
-              <div className="w-1/4 px-6 py-4">{toPercent(pair.apr)}</div>
+              <div className="w-1/4 px-6 py-4">{toAmount(pair.liquidity || 0)}</div>
+              <div className="w-1/4 px-6 py-4">{toAmount(pair.volume['24h'] || 0)}</div>
+              <div className="w-1/4 px-6 py-4">{toPercent(pair.apr || 0)}</div>
             </div>
           </Link>
         ))}

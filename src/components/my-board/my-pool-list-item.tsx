@@ -11,20 +11,20 @@ export type Pair = {
 export type PoolItemProps = {
   name: string
   poolAddress: string
-  pairs: Pair[]
+  positions: Pair[]
 }
 
-export function MyPoolListItem({ name, poolAddress, pairs }: PoolItemProps) {
+export function MyPoolListItem({ name, poolAddress, positions }: PoolItemProps) {
   const [showPairs, setShowPairs] = useState(false)
 
-  const renderPairs = () => {
+  const renderPositions = () => {
     return (
       <div>
         <div className="text-andy flex">
           <div className="px-6 py-3">#</div>
           <div className="w-1/4 px-6 py-3">Positions</div>
         </div>
-        {pairs.map((position, i) => (
+        {positions.map((position, i) => (
           <Link key={position.address} href={`/dlmm/${poolAddress}/${position.address}`}>
             <div className="flex cursor-pointer border-t">
               <div className="px-6 py-4">{i + 1}</div>
@@ -56,13 +56,13 @@ export function MyPoolListItem({ name, poolAddress, pairs }: PoolItemProps) {
       >
         <div className="text-leah w-1/4 px-6 py-4 font-medium">
           <span>{name}</span>
-          <span className="bg-bran ms-2 rounded-2xl px-3 py-1 break-keep">{pairs.length} positions</span>
+          <span className="bg-bran ms-2 rounded-2xl px-3 py-1 break-keep">{positions.length} positions</span>
         </div>
         <div className="w-1/4 px-6 py-4">tvl</div>
         <div className="w-1/4 px-6 py-4">volume</div>
         <div className="w-1/4 px-6 py-4">apr</div>
       </div>
-      {showPairs && renderPairs()}
+      {showPairs && renderPositions()}
     </div>
   )
 }
