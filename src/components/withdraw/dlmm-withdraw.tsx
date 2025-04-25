@@ -20,7 +20,7 @@ export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: st
 
   useEffect(() => {
     setFormState({ loading: true })
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/dev-clmm-api/pair/${poolAddress}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${poolAddress}`)
       .then(res => res.json())
       .then(data => {
         setPair(data)

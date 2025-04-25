@@ -1,4 +1,4 @@
-import DLMM, { StrategyType } from '@meteora-ag/dlmm'
+import DLMM, { StrategyType } from '@yeto/dlmm/ts-client'
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
 import { getAssociatedTokenAddressSync, getMint } from '@solana/spl-token'
 import { BN } from '@coral-xyz/anchor'
