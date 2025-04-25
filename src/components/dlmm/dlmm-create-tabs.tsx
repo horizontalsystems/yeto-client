@@ -7,15 +7,7 @@ import { DlmmCreatePool } from '@/components/dlmm/dlmm-create-pool'
 import { DlmmAddLiquidity } from '@/components/dlmm/dlmm-add-liquidity'
 import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-skeleton'
 import { sleep } from '@/lib/utils'
-
-interface Pair {
-  address: string
-  name: string
-  mint_x: string
-  mint_x_url: string
-  mint_y: string
-  mint_y_url: string
-}
+import { Pair } from '@/components/dlmm/dlmm-page'
 
 export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string }) {
   const [tab, setTab] = useState(address ? 'liquidity' : 'pool')
@@ -57,12 +49,7 @@ export function DlmmCreateTabs({ poolAddress: address }: { poolAddress?: string 
 
     return pair ? (
       <DlmmAddLiquidity
-        address={pair.address}
-        name={pair.name}
-        mintX={pair.mint_x}
-        mintY={pair.mint_y}
-        mintXUrl={pair.mint_x_url}
-        mintYUrl={pair.mint_y_url}
+        pair={pair}
       />
     ) : (
       <div className="mx-auto w-full p-6">

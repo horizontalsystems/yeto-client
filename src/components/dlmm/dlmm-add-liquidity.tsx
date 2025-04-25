@@ -26,15 +26,11 @@ import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
 import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } from '@/lib/utils'
+import { Pair } from '@/components/dlmm/dlmm-page'
 import { SlippagePopover } from '@/components/slippage-popover'
 
 export interface AddLiquidityProps {
-  address: string
-  name: string
-  mintX: string
-  mintXUrl: string
-  mintY: string
-  mintYUrl: string
+  pair: Pair
 }
 
 type MinMaxPrices = {
@@ -44,9 +40,8 @@ type MinMaxPrices = {
   maxPriceChange: number
 }
 
-export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiquidityProps) {
+export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
-  const [base, quote] = name?.split('-') || []
 
   const [binRange] = useState([-34, 34])
   const [bins, setBins] = useState<BinItem[]>([])
@@ -79,8 +74,8 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(address)),
-    [connection, address]
+    () => DLMM.create(connection, new PublicKey(pair.address)),
+    [connection, pair.address]
   )
 
   const [slippage, setSlippage] = useState("0.5")
@@ -190,7 +185,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
     const maxBinId = new BN(activeBin.binId + binRange[1] - binShiftRef.current)
 
     const binArraysRequired = getBinArraysRequiredByPositionRange(
-      new PublicKey(address),
+      new PublicKey(pair.address),
       minBinId,
       maxBinId,
       pool.program.programId
@@ -223,7 +218,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
 
     setBins(newBins)
     calculatePriceRange(minBinId.toNumber(), maxBinId.toNumber(), activeBin.price, pool.lbPair.binStep)
-  }, [address, binRange, calculatePriceRange, dlmmInstance])
+  }, [pair.address, binRange, calculatePriceRange, dlmmInstance])
 
   const calculateBinsThrottle = useDebouncedCallback(calculateBins, 200)
 
@@ -235,7 +230,7 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
       .finally(() => {
         setInitializing(false)
       })
-  }, [address, calculateBins, syncBalance, syncBins])
+  }, [pair.address, calculateBins, syncBalance, syncBins])
 
   const onChangeBaseAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountX']) })
@@ -311,8 +306,8 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
               <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
             </div>
-            <SlippagePopover 
-              defaultValue={slippage} 
+            <SlippagePopover
+              defaultValue={slippage}
               onChange={setSlippage}
             />
           </div>
@@ -326,8 +321,8 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
         <div className="flex grow-1 flex-col">
           <div className="relative">
             <div className="absolute top-3 left-0 ms-3 flex items-center">
-              <img src={mintXUrl} alt="" width="24" height="24" />
-              <span className="ms-2">{base}</span>
+              <img src={pair.mint_x.logo_url} alt="" width="24" height="24" />
+              <span className="ms-2">{pair.mint_x.name}</span>
             </div>
             <Input
               ref={baseAmountRef}
@@ -359,8 +354,8 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
         <div className="flex grow-1 flex-col">
           <div className="relative">
             <div className="absolute top-3 left-0 ms-3 flex items-center">
-              <img src={mintYUrl} alt="" width="24" height="24" />
-              <span className="ms-2">{quote}</span>
+              <img src={pair.mint_y.logo_url} alt="" width="24" height="24" />
+              <span className="ms-2">{pair.mint_y.name}</span>
             </div>
             <Input
               ref={quoteAmountRef}
@@ -412,10 +407,10 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
             </Select>
             <ToggleGroup type="single" variant="outline" size="sm" defaultValue="sol" disabled={formState.submitting}>
               <ToggleGroupItem value="sol" className="px-3">
-                {base}
+                {pair.mint_x.name}
               </ToggleGroupItem>
               <ToggleGroupItem value="usdc" className="px-3" disabled>
-                {quote}
+                {pair.mint_y.name}
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
