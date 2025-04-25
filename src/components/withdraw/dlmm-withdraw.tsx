@@ -14,18 +14,27 @@ export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: st
 
   useEffect(() => {
     setFormState({ loading: true })
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${poolAddress}`)
-      .then(res => res.json())
-      .then(data => {
-        setPair(data)
-        setFormState({ loading: false })
-      })
-      .catch(err => {
-        setFormState({ loading: false, error: err.message })
-      })
+    const sync = async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${poolAddress}`)
+
+      if (!res.ok) {
+        return setFormState({ loading: false, error: 'Failed to fetch pair' })
+      }
+
+      await res
+        .json()
+        .then(data => {
+          setPair(data)
+          setFormState({ loading: false })
+        })
+        .catch(err => {
+          setFormState({ loading: false, error: err.message })
+        })
+    }
+    sync()
   }, [poolAddress])
 
-  if (!pair || formState.loading) {
+  if (formState.loading) {
     return <DlmmWithdrawSkeleton />
   }
 
@@ -39,7 +48,11 @@ export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: st
         </div>
       </TabsList>
       <TabsContent value="swap" forceMount>
-        <DlmmWithdrawForm pair={pair} poolAddress={poolAddress} positionAddress={positionAddress} />
+        {pair ? (
+          <DlmmWithdrawForm pair={pair} poolAddress={poolAddress} positionAddress={positionAddress} />
+        ) : (
+          <div className="p-6">Pair is not found</div>
+        )}
       </TabsContent>
     </Tabs>
   )
