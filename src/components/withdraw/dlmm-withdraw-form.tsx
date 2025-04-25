@@ -11,6 +11,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { ExternalLink, Info } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Pair } from '@/components/dlmm/dlmm-page'
+import { SlippagePopover } from '@/components/slippage-popover'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -114,23 +115,12 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
   return (
     <form className="p-6" onSubmit={handleWithdraw}>
       <div className="mb-4 flex items-center justify-between">
-        <div className="text-2xl">Percentage to withdraw</div>
-        <div>
-          <Select
-            value={slippage.toString()}
-            onValueChange={v => setSlippage(parseFloat(v))}
-            disabled={formState.submitting}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="min-w-0">
-              <SelectItem value="1">1%</SelectItem>
-              <SelectItem value="2">2%</SelectItem>
-              <SelectItem value="3">3%</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <h2 className="text-lg font-semibold">Percentage to withdraw</h2>
+        <SlippagePopover 
+          defaultValue={slippage.toString()} 
+          onChange={(value) => setSlippage(parseFloat(value))}
+          title="Slippage"
+        />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="mb-4 space-y-2">

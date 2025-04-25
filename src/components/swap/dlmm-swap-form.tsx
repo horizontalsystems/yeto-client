@@ -13,7 +13,7 @@ import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { percentage } from '@/lib/utils'
 import DLMM from '@yeto/dlmm/ts-client'
-import { SlippagePopover } from '@/components/ui/slippage-popover'
+import { SlippagePopover } from '@/components/slippage-popover'
 
 interface DlmmSwapFormProps {
   name: string
@@ -33,7 +33,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
   const amountXRef = useRef<HTMLInputElement | null>(null)
   const amountYRef = useRef<HTMLInputElement | null>(null)
 
-  const [base, quote] = name.split('-')
+  const [base, quote] = name?.split('-') || []
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])

@@ -26,7 +26,7 @@ import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
 import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } from '@/lib/utils'
-import { SlippagePopover } from '@/components/ui/slippage-popover'
+import { SlippagePopover } from '@/components/slippage-popover'
 
 export interface AddLiquidityProps {
   address: string
@@ -46,7 +46,7 @@ type MinMaxPrices = {
 
 export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiquidityProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
-  const [base, quote] = name.split('-')
+  const [base, quote] = name?.split('-') || []
 
   const [binRange] = useState([-34, 34])
   const [bins, setBins] = useState<BinItem[]>([])

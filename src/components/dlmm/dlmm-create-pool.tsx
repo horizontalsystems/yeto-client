@@ -208,6 +208,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       <div className="mb-6">
         <div className="grid grid-cols-2 gap-3">
           <SelectNumber
+            infoText="The minimum fee earned when users swap assets within a position, serving as the baseline trading cost."
             placeholder="Base Fee"
             defaultValue="0.01"
             items={baseFeePercentages}
@@ -215,6 +216,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
             disabled={formState.submitting}
           />
           <SelectNumber
+            infoText="The price gap between each bin. A larger step covers a wider price range but captures less volume than a smaller one."
             value={binStep.toString()}
             placeholder="Bin Step"
             items={binStepsByBaseFee(baseFee).map(i => i.toString())}

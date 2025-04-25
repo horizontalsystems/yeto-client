@@ -6,7 +6,7 @@ import { useState } from "react"
 
 interface SlippagePopoverProps {
   defaultValue?: string
-  onChange?: (value: string) => void
+  onChange: (value: string) => void
   title?: string
 }
 
@@ -22,13 +22,13 @@ export function SlippagePopover({
   const handleSlippageChange = (value: string) => {
     setSlippage(value)
     setCustomSlippage("")
-    onChange?.(value)
+    onChange(value)
   }
 
   const handleCustomSlippageChange = (value: string) => {
     setCustomSlippage(value)
     setSlippage(value)
-    onChange?.(value)
+    onChange(value)
   }
 
   return (
