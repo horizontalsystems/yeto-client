@@ -1,6 +1,6 @@
 'use client'
 
-import DLMM from '@meteora-ag/dlmm'
+import DLMM from '@yeto/dlmm/ts-client'
 import { useMemo, useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -16,10 +16,7 @@ export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: str
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(poolAddress), { cluster: 'devnet' }),
-    [connection, poolAddress]
-  )
+  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
 
   const handleClaim = async () => {
     if (!walletPubKey || !connected) {
