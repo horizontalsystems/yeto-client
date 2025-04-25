@@ -1,21 +1,11 @@
 import { type ReactNode } from 'react'
 import { type Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import { SolanaProvider } from '@/components/solana-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { ReactQueryProvider } from '@/components/react-query-provider'
+import { SolanaProvider } from '@/components/solana-provider'
 import { Header } from '@/components/header'
 
 import '@/styles/globals.css'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin']
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin']
-})
 
 export const metadata: Metadata = {
   title: 'YETO',
@@ -25,15 +15,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children, modal }: Readonly<{ children: ReactNode; modal: ReactNode }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} text-dark bg-white antialiased dark:bg-black dark:text-white`}
-      >
-        <SolanaProvider>
-          <Header />
-          {modal}
-          {children}
-          <Toaster />
-        </SolanaProvider>
+      <body className="text-dark bg-white antialiased dark:bg-black dark:text-white">
+        <ReactQueryProvider>
+          <SolanaProvider>
+            <Header />
+            {modal}
+            {children}
+            <Toaster />
+          </SolanaProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   )

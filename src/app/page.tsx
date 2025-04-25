@@ -2,9 +2,15 @@ import { PoolList } from '@/components/pool/pool-list'
 import { TvlChart } from '@/components/chart/tvl-chart'
 import { Button } from '@/components/ui/button'
 import { SwapVolumeChart } from '@/components/chart/swap-volume-chart'
+import { getQueryClient } from '@/components/react-query-client'
+import { getPools } from '@/lib/api'
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ query?: string }> }) {
-  const query = (await searchParams).query
+export default async function Home() {
+  const queryClient = getQueryClient()
+  await queryClient.prefetchQuery({
+    queryKey: ['pools', ''],
+    queryFn: () => getPools('')
+  })
 
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
@@ -53,7 +59,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
             <SwapVolumeChart />
           </div>
         </div>
-        <PoolList query={query} />
+        <PoolList />
       </div>
     </div>
   )

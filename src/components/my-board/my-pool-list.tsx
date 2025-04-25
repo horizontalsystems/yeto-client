@@ -49,13 +49,13 @@ export function MyPoolList() {
   }, [connection, walletPubKey])
 
   if (loading) {
-    return <PoolListSkeleton />
+    return <PoolListSkeleton withSearchInput />
   }
 
   return (
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
       <div className="bg-card flex space-x-2 p-6">
-        <SearchInput />
+        <SearchInput onChangeValue={v => console.log(v)} />
         <Link href="/dlmm/create">
           <Button variant="light" className="cursor-pointer">
             <Plus /> Create Pool

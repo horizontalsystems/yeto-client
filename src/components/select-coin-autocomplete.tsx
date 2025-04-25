@@ -5,12 +5,10 @@ import { useDebounce } from 'use-debounce'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { ApiCoinItem, searchCoins } from '@/lib/api'
 import { cn } from '@/lib/utils'
-
-const queryClient = new QueryClient()
 
 export type SearchResponse = {
   items: ApiCoinItem[]
@@ -62,9 +60,7 @@ export function SelectCoinAutocomplete({ onSelect, error, placeholder, disabled 
       </PopoverTrigger>
 
       <PopoverContent className="p-0" align="start">
-        <QueryClientProvider client={queryClient}>
-          {triggerFetch && <SelectCoinSearch selectedResult={selected} onSelectResult={handleSetActive} />}
-        </QueryClientProvider>
+        {triggerFetch && <SelectCoinSearch selectedResult={selected} onSelectResult={handleSetActive} />}
       </PopoverContent>
     </Popover>
   )

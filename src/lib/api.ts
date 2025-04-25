@@ -6,6 +6,27 @@ export type ApiCoinItem = {
   logoURI: string
 }
 
+export async function getPools(query: string) {
+  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=0&limit=10&unknown=true&sort_key=volume&order_by=desc`
+  if (query.length) {
+    apiUrl += `&search_term=${encodeURIComponent(query)}`
+  }
+
+  // return await fetch(apiUrl)
+  //   .then(res => res.json())
+  //   .then(res => res.groups)
+  //
+  const res = await fetch(apiUrl)
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch pools')
+  }
+
+  const data = await res.json()
+
+  return data.groups
+}
+
 export async function searchCoins(query: string) {
   const items = await fetch('https://search.jup.ag/multi_search', {
     method: 'POST',
@@ -58,13 +79,15 @@ export async function searchCoins(query: string) {
         name: 'Solana Gold',
         symbol: 'GOLDSOL',
         decimals: 6,
-        logoURI: 'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
+        logoURI:
+          'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
       })
       coinList.unshift({
         address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
         name: 'USDC',
         symbol: 'USDC',
-        logoURI: ''
+        logoURI:
+          'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
       })
       return coinList
     })
