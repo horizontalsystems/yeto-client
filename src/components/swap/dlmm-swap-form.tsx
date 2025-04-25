@@ -13,6 +13,7 @@ import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { percentage } from '@/lib/utils'
 import DLMM from '@yeto/dlmm/ts-client'
+import { SlippagePopover } from '@/components/ui/slippage-popover'
 
 interface DlmmSwapFormProps {
   name: string
@@ -197,21 +198,11 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
     <form className="p-6" onSubmit={handleSwap}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Enter Amount</h2>
-        <Select
-          value={slippage.toString()}
-          disabled={formState.submitting}
-          onValueChange={v => setSlippage(parseFloat(v))}
-        >
-          <SelectTrigger className="h-8 w-[80px] text-xs">
-            <SelectValue placeholder="Slippage" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0.1">0.1%</SelectItem>
-            <SelectItem value="0.5">0.5%</SelectItem>
-            <SelectItem value="1">1%</SelectItem>
-            <SelectItem value="2">2%</SelectItem>
-          </SelectContent>
-        </Select>
+        <SlippagePopover 
+          defaultValue={slippage.toString()} 
+          onChange={(value) => setSlippage(parseFloat(value))}
+          title="Slippage"
+        />
       </div>
       <div className="mb-4 space-y-2">
         {inputX}

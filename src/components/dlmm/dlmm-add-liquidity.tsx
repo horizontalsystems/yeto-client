@@ -26,8 +26,7 @@ import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
 import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } from '@/lib/utils'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { SlippagePopover } from '@/components/ui/slippage-popover'
 
 export interface AddLiquidityProps {
   address: string
@@ -85,8 +84,6 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   )
 
   const [slippage, setSlippage] = useState("0.5")
-  const [customSlippage, setCustomSlippage] = useState("")
-  const [isSlippageOpen, setIsSlippageOpen] = useState(false)
 
   const handleSubmit = async (v: SyntheticEvent) => {
     v.preventDefault()
@@ -297,7 +294,6 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
   }
 
   const handleCustomSlippageChange = (value: string) => {
-    setCustomSlippage(value)
     setSlippage(value)
   }
 
@@ -315,51 +311,10 @@ export function DlmmAddLiquidity({ address, name, mintYUrl, mintXUrl }: AddLiqui
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
               <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
             </div>
-            <Popover open={isSlippageOpen} onOpenChange={setIsSlippageOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {slippage}%
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 mr-4 bg-background border-border">
-                <div className="mb-4">
-                  <div className="text-lg text-gray">Liquidity Slippage</div>
-                  <div className="mt-4 h-px bg-border -mx-4" />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <ToggleGroup 
-                    type="single" 
-                    variant="outline" 
-                    value={slippage} 
-                    onValueChange={setSlippage} 
-                    className="justify-start gap-2"
-                  >
-                    <ToggleGroupItem value="0.1" className="rounded-full px-4 [&:first-child]:rounded-full [&:last-child]:rounded-full">0.1%</ToggleGroupItem>
-                    <ToggleGroupItem value="0.5" className="rounded-full px-4 [&:first-child]:rounded-full [&:last-child]:rounded-full">0.5%</ToggleGroupItem>
-                    <ToggleGroupItem value="1.0" className="rounded-full px-4 [&:first-child]:rounded-full [&:last-child]:rounded-full">1.0%</ToggleGroupItem>
-                    <ToggleGroupItem value="1.5" className="rounded-full px-4 [&:first-child]:rounded-full [&:last-child]:rounded-full">1.5%</ToggleGroupItem>
-                  </ToggleGroup>
-                  
-                  <div>
-                    <div className="mb-2">Custom</div>
-                    <Input 
-                      type="text" 
-                      placeholder="0.0%" 
-                      value={customSlippage}
-                      className="mb-4 placeholder:text-gray"
-                      onChange={(e) => handleCustomSlippageChange(e.target.value)}
-                    />
-                    <Button 
-                      variant="secondary" 
-                      className="w-full bg-muted/80 hover:bg-muted"
-                      onClick={() => setIsSlippageOpen(false)}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <SlippagePopover 
+              defaultValue={slippage} 
+              onChange={setSlippage}
+            />
           </div>
         </div>
         <div className="text-muted-foreground mt-1 text-sm">
