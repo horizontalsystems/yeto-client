@@ -1,7 +1,7 @@
+import DLMM from '@yeto/dlmm/ts-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
@@ -12,7 +12,6 @@ import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { percentage } from '@/lib/utils'
-import DLMM from '@yeto/dlmm/ts-client'
 import { SlippagePopover } from '@/components/slippage-popover'
 
 interface DlmmSwapFormProps {
@@ -198,8 +197,8 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
     <form className="p-6" onSubmit={handleSwap}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Enter Amount</h2>
-        <SlippagePopover 
-          defaultValue={slippage.toString()} 
+        <SlippagePopover
+          defaultValue={slippage.toString()}
           onChange={(value) => setSlippage(parseFloat(value))}
           title="Slippage"
         />

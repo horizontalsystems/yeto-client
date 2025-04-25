@@ -73,12 +73,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(pair.address)),
-    [connection, pair.address]
-  )
+  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
 
-  const [slippage, setSlippage] = useState("0.5")
+  const [slippage, setSlippage] = useState('0.5')
 
   const handleSubmit = async (v: SyntheticEvent) => {
     v.preventDefault()
@@ -239,7 +236,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (quoteAmountRef.current) {
-      quoteAmountRef.current.value = toRounded(parseFloat(pool.fromPricePerLamport(Number(activeBin.price))) * value).toString()
+      quoteAmountRef.current.value = toRounded(
+        parseFloat(pool.fromPricePerLamport(Number(activeBin.price))) * value
+      ).toString()
     }
   }
 
@@ -257,7 +256,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
     if (baseAmountRef.current) {
-      baseAmountRef.current.value = toRounded(value / parseFloat(pool.fromPricePerLamport(Number(activeBin.price)))).toString()
+      baseAmountRef.current.value = toRounded(
+        value / parseFloat(pool.fromPricePerLamport(Number(activeBin.price)))
+      ).toString()
     }
   }
 
@@ -281,17 +282,6 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     }
   }
 
-  const onChangeAutoFillPercent = (percent: string) => {
-    autoFillRef.current = parseInt(percent)
-    if (autoFill) {
-      onChangeAutoFill(true)
-    }
-  }
-
-  const handleCustomSlippageChange = (value: string) => {
-    setSlippage(value)
-  }
-
   if (initializing) {
     return <DlmmAddLiquiditySkeleton />
   }
@@ -306,10 +296,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
               <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
             </div>
-            <SlippagePopover
-              defaultValue={slippage}
-              onChange={setSlippage}
-            />
+            <SlippagePopover defaultValue={slippage} onChange={setSlippage} />
           </div>
         </div>
         <div className="text-muted-foreground mt-1 text-sm">
