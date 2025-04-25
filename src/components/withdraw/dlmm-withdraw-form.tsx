@@ -1,4 +1,5 @@
 import DLMM from '@yeto/dlmm/ts-client'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
@@ -9,15 +10,15 @@ import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { ExternalLink, Info } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
-import { toast } from 'sonner'
+import { Pair } from '@/components/dlmm/dlmm-page'
 
 interface DlmmWithdrawFormProps {
-  name: string
+  pair: Pair
   poolAddress: string
   positionAddress: string
 }
 
-export function DlmmWithdrawForm({ name, poolAddress, positionAddress }: DlmmWithdrawFormProps) {
+export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWithdrawFormProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [formState, setFormState] = useState<{ submitting: boolean; error?: string }>({
     submitting: false
@@ -28,7 +29,6 @@ export function DlmmWithdrawForm({ name, poolAddress, positionAddress }: DlmmWit
 
   const [amountPercent, setAmountPercent] = useState(100)
 
-  const [mintX, mintY] = name.split('-')
   const [tokenWithdraw, setTokenWithdraw] = useState('mint_x')
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
@@ -143,9 +143,11 @@ export function DlmmWithdrawForm({ name, poolAddress, positionAddress }: DlmmWit
                 </div>
               </SelectTrigger>
               <SelectContent className="min-w-0">
-                <SelectItem value="mint_x">{mintX}</SelectItem>
-                <SelectItem value="mint_y">{mintY}</SelectItem>
-                <SelectItem value="mint_x-mint_y">{name}</SelectItem>
+                <SelectItem value="mint_x">{pair.mint_x.name}</SelectItem>
+                <SelectItem value="mint_y">{pair.mint_y.name}</SelectItem>
+                <SelectItem value="mint_x-mint_y">
+                  {pair.mint_x.name}-{pair.mint_y.name}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

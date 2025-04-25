@@ -4,13 +4,7 @@ import { useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DlmmWithdrawForm } from '@/components/withdraw/dlmm-withdraw-form'
 import { DlmmWithdrawSkeleton } from '@/components/withdraw/dlmm-withdraw-skeleton'
-
-interface Pair {
-  address: string
-  name: string
-  mint_x_url: string
-  mint_y_url: string
-}
+import { Pair } from '@/components/dlmm/dlmm-page'
 
 export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: string; positionAddress: string }) {
   const [pair, setPair] = useState<Pair>()
@@ -45,7 +39,7 @@ export function DlmmWithdraw({ poolAddress, positionAddress }: { poolAddress: st
         </div>
       </TabsList>
       <TabsContent value="swap" forceMount>
-        <DlmmWithdrawForm name={pair.name} poolAddress={poolAddress} positionAddress={positionAddress} />
+        <DlmmWithdrawForm pair={pair} poolAddress={poolAddress} positionAddress={positionAddress} />
       </TabsContent>
     </Tabs>
   )

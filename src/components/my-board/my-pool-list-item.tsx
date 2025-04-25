@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
-export type Pair = {
+export type Position = {
   address: string
 }
 
 export type PoolItemProps = {
   name: string
   poolAddress: string
-  positions: Pair[]
+  positions: Position[]
 }
 
 export function MyPoolListItem({ name, poolAddress, positions }: PoolItemProps) {
