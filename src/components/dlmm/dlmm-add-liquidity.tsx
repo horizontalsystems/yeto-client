@@ -29,6 +29,11 @@ import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } fro
 import { Pair } from '@/components/dlmm/dlmm-page'
 import { SlippagePopover } from '@/components/slippage-popover'
 
+const formatPriceByDecimals = (price: number, decimals: number = 6): number => {
+  const factor = Math.pow(10, decimals);
+  return Math.round(price * factor) / factor;
+};
+
 export interface AddLiquidityProps {
   pair: Pair
 }
@@ -155,12 +160,12 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const pool = await dlmmInstance
 
     setPriceRange({
-      minPrice: Number(pool.fromPricePerLamport(startPrice.toNumber())),
+      minPrice: formatPriceByDecimals(Number(pool.fromPricePerLamport(startPrice.toNumber())), pool.tokenX.decimal),
       minPriceChange: toRounded(startPriceChange || 0),
-      maxPrice: Number(pool.fromPricePerLamport(endPrice.toNumber())),
+      maxPrice: formatPriceByDecimals(Number(pool.fromPricePerLamport(endPrice.toNumber())), pool.tokenX.decimal),
       maxPriceChange: toRounded(endPriceChange || 0)
     })
-  }, [])
+  }, [dlmmInstance])
 
   const syncBalance = useCallback(async () => {
     const dlmmPool = await dlmmInstance
