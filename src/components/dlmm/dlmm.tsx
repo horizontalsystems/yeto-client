@@ -79,8 +79,20 @@ export function Dlmm({ address }: { address: string }) {
       <div className="flex flex-1 flex-col gap-4 pt-0">
         <div className="bg-card w-full rounded-xl p-6 pb-4">
           <div className="flex flex-row justify-between pb-6">
-            <div className="text-foreground text-2xl uppercase">
-              {pair.mint_x.name} / {pair.mint_y.name}
+            <div className="text-foreground flex items-center space-x-2 text-2xl uppercase">
+              <div className="flex -space-x-1">
+                <img 
+                  src={pair.mint_x.logo_url} 
+                  alt={pair.mint_x.name} 
+                  className="h-8 w-8 rounded-full"
+                />
+                <img 
+                  src={pair.mint_y.logo_url} 
+                  alt={pair.mint_y.name} 
+                  className="h-8 w-8 rounded-full"
+                />
+              </div>
+              <span>{pair.mint_x.name} / {pair.mint_y.name}</span>
             </div>
             <div className="flex space-x-3">
               <Link href={`/dlmm/swap/${address}`}>
