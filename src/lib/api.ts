@@ -79,6 +79,13 @@ export async function searchCoins(query: string) {
           'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
       })
       coinList.unshift({
+        address: 'BoeHw5peaJ2krA1gf7KpLNCNwurvXZtytpTuEFUbvvC',
+        name: 'Bonk token',
+        symbol: 'BONK',
+        decimals: 5,
+        logoURI: 'https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q6wqwf5cSY7I'
+      })
+      coinList.unshift({
         address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
         name: 'USDC',
         symbol: 'USDC',

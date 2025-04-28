@@ -30,7 +30,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
 
   const [amountPercent, setAmountPercent] = useState(100)
 
-  const [tokenWithdraw, setTokenWithdraw] = useState('mint_x')
+  const [tokenWithdraw, setTokenWithdraw] = useState('mint_x-mint_y')
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
@@ -61,6 +61,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
 
       let fromBinId = binRange[0]
       let toBinId = binRange[1]
+      let closePosition = false
 
       if (tokenWithdraw === 'mint_x') {
         fromBinId = activeBin.binId
@@ -68,6 +69,8 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
       } else if (tokenWithdraw === 'mint_y') {
         fromBinId = position.positionData.lowerBinId
         toBinId = activeBin.binId
+      } else if (tokenWithdraw === 'mint_x-mint_y') {
+        closePosition = amountPercent === 100
       }
 
       let withdrawTx = await dlmmPool.removeLiquidity({
@@ -75,7 +78,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         position: new PublicKey(positionAddress),
         binIds: [fromBinId, toBinId],
         bps: new BN(amountPercent * 100),
-        shouldClaimAndClose: true
+        shouldClaimAndClose: closePosition
       })
 
       if (Array.isArray(withdrawTx)) {

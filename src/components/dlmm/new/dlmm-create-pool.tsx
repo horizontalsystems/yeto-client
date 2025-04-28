@@ -1,6 +1,6 @@
 'use client'
 
-import DLMM from '@yeto/dlmm/ts-client'
+import DLMM, { deriveLbPair2 } from '@yeto/dlmm/ts-client'
 import { SyntheticEvent, useState } from 'react'
 import { ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
 import { ApiCoinItem } from '@/lib/api'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { cn, derivePresetParameter, u16ToBuffer } from '@/lib/utils'
+import { cn, derivePresetParameter } from '@/lib/utils'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { BN } from '@coral-xyz/anchor'
 import { DLMM_PROGRAM_IDS } from '@/lib/constants'
@@ -65,10 +65,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       const tokenMintY = new PublicKey(quote.address)
       const baseFactor = (baseFee * 10000 ** 2) / (100 * binStep)
 
-      const [poolAddress] = PublicKey.findProgramAddressSync(
-        [tokenMintX.toBuffer(), tokenMintY.toBuffer(), u16ToBuffer(binStep), u16ToBuffer(baseFactor)],
-        programId
-      )
+      const [poolAddress] = deriveLbPair2(tokenMintX, tokenMintY, new BN(binStep), new BN(baseFactor), programId)
 
       const accountInfo = await connection.getAccountInfo(poolAddress)
       if (accountInfo) {
