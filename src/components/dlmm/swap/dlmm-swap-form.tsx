@@ -6,7 +6,7 @@ import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } fro
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { ExternalLink, Info } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
@@ -34,10 +34,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(pair.address)),
-    [connection, pair.address]
-  )
+  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
 
   useEffect(() => {
     const sync = async () => {
@@ -156,11 +153,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const inputX = (
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
-        <img 
-          src={pair.mint_x.logo_url} 
-          alt={pair.mint_x.name}
-          className="h-5 w-5 rounded-full"
-        />
+        <img src={pair.mint_x.logo_url} alt={pair.mint_x.name} className="h-5 w-5 rounded-full" />
         <span className="ms-2 font-medium">{pair.mint_x.name}</span>
       </div>
       <Input
@@ -179,11 +172,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const inputY = (
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
-        <img 
-          src={pair.mint_y.logo_url} 
-          alt={pair.mint_y.name}
-          className="h-5 w-5 rounded-full"
-        />
+        <img src={pair.mint_y.logo_url} alt={pair.mint_y.name} className="h-5 w-5 rounded-full" />
         <span className="ms-2 font-medium">{pair.mint_y.name}</span>
       </div>
       <Input
@@ -205,7 +194,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         <h2 className="text-lg font-semibold">Enter Amount</h2>
         <SlippagePopover
           defaultValue={slippage.toString()}
-          onChange={(value) => setSlippage(parseFloat(value))}
+          onChange={value => setSlippage(parseFloat(value))}
           title="Slippage"
         />
       </div>
