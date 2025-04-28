@@ -25,14 +25,9 @@ import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/dlmm-add-liquidity-s
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/dlmm-liquidity-chart'
-import { binIdToBinArrayIndex, cn, percentage, percentageChange, toRounded } from '@/lib/utils'
+import { binIdToBinArrayIndex, cn, formatPrice, percentage, percentageChange, toRounded } from '@/lib/utils'
 import { Pair } from '@/components/dlmm/dlmm-page'
 import { SlippagePopover } from '@/components/slippage-popover'
-
-const formatPriceByDecimals = (price: number, decimals: number = 6): number => {
-  const factor = Math.pow(10, decimals);
-  return Math.round(price * factor) / factor;
-};
 
 export interface AddLiquidityProps {
   pair: Pair
@@ -160,9 +155,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const pool = await dlmmInstance
 
     setPriceRange({
-      minPrice: formatPriceByDecimals(Number(pool.fromPricePerLamport(startPrice.toNumber())), pool.tokenX.decimal),
+      minPrice: Number(pool.fromPricePerLamport(startPrice.toNumber())),
       minPriceChange: toRounded(startPriceChange || 0),
-      maxPrice: formatPriceByDecimals(Number(pool.fromPricePerLamport(endPrice.toNumber())), pool.tokenX.decimal),
+      maxPrice: Number(pool.fromPricePerLamport(endPrice.toNumber())),
       maxPriceChange: toRounded(endPriceChange || 0)
     })
   }, [dlmmInstance])
@@ -423,7 +418,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
           <Label className="mb-2">Min Price</Label>
           <div className="flex">
             <Input
-              value={priceRange.minPrice}
+              value={formatPrice(priceRange.minPrice, pair.mint_x.decimals)}
               className="h-11 grow-1 rounded-r-none border-r-0"
               type="text"
               onChange={v => console.log(v)}
@@ -446,7 +441,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
           <Label className="mb-2">Max Price</Label>
           <div className="flex">
             <Input
-              value={priceRange.maxPrice}
+              value={formatPrice(priceRange.maxPrice, pair.mint_x.decimals)}
               className="h-11 grow-1 rounded-r-none border-r-0"
               type="text"
               placeholder="0"

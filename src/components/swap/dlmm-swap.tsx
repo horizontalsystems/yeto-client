@@ -4,17 +4,14 @@ import { useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DlmmSwapForm } from '@/components/swap/dlmm-swap-form'
 import { DlmmSwapSkeleton } from '@/components/swap/dlmm-swap-skeleton'
+import { Pair } from '@/components/dlmm/dlmm-page'
 
-interface Pair {
-  address: string
-  name: string
-  mint_x_url: string
-  mint_y_url: string
+interface DlmmSwapProps {
+  poolAddress: string;
 }
 
-export function DlmmSwap({ poolAddress }: { poolAddress: string }) {
-  const [pair, setPair] = useState<Pair>()
-  const [formState, setFormState] = useState<{ loading: boolean; error?: string }>({
+export function DlmmSwap({ poolAddress }: DlmmSwapProps) {
+  const [formState, setFormState] = useState<{ loading: boolean; error?: string; pair?: Pair }>({
     loading: true
   })
 
@@ -24,17 +21,18 @@ export function DlmmSwap({ poolAddress }: { poolAddress: string }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${poolAddress}`)
       .then(res => res.json())
       .then(data => {
-        setPair(data)
-        setFormState({ loading: false })
+        setFormState({ loading: false, pair: data })
       })
       .catch(err => {
         setFormState({ loading: false, error: err.message })
       })
   }, [poolAddress])
 
-  if (!pair || formState.loading) {
+  if (formState.loading || !formState.pair) {
     return <DlmmSwapSkeleton />
   }
+
+  const pair = formState.pair;
 
   return (
     <Tabs defaultValue="swap">
@@ -46,7 +44,12 @@ export function DlmmSwap({ poolAddress }: { poolAddress: string }) {
         </div>
       </TabsList>
       <TabsContent value="swap" forceMount>
-        <DlmmSwapForm name={pair.name} address={poolAddress} />
+        <DlmmSwapForm
+          name={`${pair.mint_x.name}-${pair.mint_y.name}`}
+          address={pair.address}
+          mint_x={pair.mint_x}
+          mint_y={pair.mint_y}
+        />
       </TabsContent>
     </Tabs>
   )

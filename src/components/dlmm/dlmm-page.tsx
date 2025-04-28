@@ -23,11 +23,13 @@ export type Pair = {
     address: string
     name: string
     logo_url: string
+    decimals: number
   }
   mint_y: {
     address: string
     name: string
     logo_url: string
+    decimals: number
   }
   liquidity: string
   apr: string

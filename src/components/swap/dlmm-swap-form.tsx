@@ -11,15 +11,21 @@ import { ToggleGroup } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
-import { percentage } from '@/lib/utils'
+import { formatPrice, percentage } from '@/lib/utils'
 import { SlippagePopover } from '@/components/slippage-popover'
 
 interface DlmmSwapFormProps {
   name: string
   address: string
+  mint_x: {
+    decimals: number
+  }
+  mint_y: {
+    decimals: number
+  }
 }
 
-export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
+export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [formState, setFormState] = useState<{ submitting: boolean; error?: string }>({
     submitting: false
@@ -270,7 +276,7 @@ export function DlmmSwapForm({ name, address }: DlmmSwapFormProps) {
         )}
         <div className="text-gray space-y-1 text-right text-xs">
           <p>
-            1 {base} ≈ {pricePerToken} {quote}
+            1 {base} ≈ {formatPrice(pricePerToken, mint_y.decimals)} {quote}
           </p>
         </div>
       </div>

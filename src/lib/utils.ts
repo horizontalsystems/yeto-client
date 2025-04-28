@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
+import Decimal from 'decimal.js'
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -81,4 +82,50 @@ export function sleep(timeout: number = 1000): Promise<void> {
 export function sortTokenMints(tokenX: PublicKey, tokenY: PublicKey) {
   const [minKey, maxKey] = tokenX.toBuffer().compare(tokenY.toBuffer()) == 1 ? [tokenY, tokenX] : [tokenX, tokenY]
   return [minKey, maxKey]
+}
+
+/**
+ * Formats a number according to the specified decimal places and options
+ * @param value - The number to format
+ * @param decimals - Number of decimal places (default: 6)
+ * @param options - Additional formatting options
+ * @returns Formatted number string
+ */
+export function formatNumber(value: number | string | Decimal, decimals: number = 6, options: {
+  compact?: boolean;
+  minimumFractionDigits?: number;
+} = {}): string {
+  const decimalValue = new Decimal(value);
+  
+  // For very small numbers, use scientific notation
+  if (decimalValue.abs().gt(0) && decimalValue.abs().lt(new Decimal('0.000001'))) {
+    return decimalValue.toExponential(decimals);
+  }
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: options.minimumFractionDigits ?? decimals,
+    maximumFractionDigits: decimals,
+    notation: options.compact ? 'compact' : 'standard'
+  });
+
+  return formatter.format(decimalValue.toNumber());
+}
+
+/**
+ * Formats a price value according to token decimals
+ * @param price - The price to format
+ * @param decimals - Token decimals (default: 6)
+ * @returns Formatted price string
+ */
+export function formatPrice(price: number | string | Decimal, decimals: number = 6): string {
+  const decimalPrice = new Decimal(price);
+  
+  // For very small numbers, use scientific notation
+  if (decimalPrice.abs().gt(0) && decimalPrice.abs().lt(new Decimal('0.000001'))) {
+    return decimalPrice.toExponential(decimals);
+  }
+
+  return formatNumber(decimalPrice, decimals, {
+    minimumFractionDigits: Math.min(decimals, 2)
+  });
 }
