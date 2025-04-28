@@ -15,17 +15,18 @@ import { formatPrice, percentage } from '@/lib/utils'
 import { SlippagePopover } from '@/components/slippage-popover'
 
 interface DlmmSwapFormProps {
-  name: string
   address: string
   mint_x: {
+    name: string
     decimals: number
   }
   mint_y: {
+    name: string
     decimals: number
   }
 }
 
-export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProps) {
+export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [formState, setFormState] = useState<{ submitting: boolean; error?: string }>({
     submitting: false
@@ -37,8 +38,6 @@ export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProp
 
   const amountXRef = useRef<HTMLInputElement | null>(null)
   const amountYRef = useRef<HTMLInputElement | null>(null)
-
-  const [base, quote] = name?.split('-') || []
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
@@ -165,7 +164,7 @@ export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProp
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
         <Info size="16" />
-        <span className="ms-2 font-medium">{base}</span>
+        <span className="ms-2 font-medium">{mint_x.name}</span>
       </div>
       <Input
         ref={amountXRef}
@@ -184,7 +183,7 @@ export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProp
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
         <Info size="16" />
-        <span className="ms-2 font-medium">{quote}</span>
+        <span className="ms-2 font-medium">{mint_y.name}</span>
       </div>
       <Input
         ref={amountYRef}
@@ -276,7 +275,7 @@ export function DlmmSwapForm({ name, address, mint_x, mint_y }: DlmmSwapFormProp
         )}
         <div className="text-gray space-y-1 text-right text-xs">
           <p>
-            1 {base} ≈ {formatPrice(pricePerToken, mint_y.decimals)} {quote}
+            1 {mint_x.name} ≈ {formatPrice(pricePerToken, mint_y.decimals)} {mint_y.name}
           </p>
         </div>
       </div>

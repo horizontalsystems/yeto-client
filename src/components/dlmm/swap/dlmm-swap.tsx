@@ -7,7 +7,7 @@ import { DlmmSwapSkeleton } from '@/components/dlmm/swap/dlmm-swap-skeleton'
 import { Pair } from '@/components/dlmm/dlmm'
 
 interface DlmmSwapProps {
-  poolAddress: string;
+  poolAddress: string
 }
 
 export function DlmmSwap({ poolAddress }: DlmmSwapProps) {
@@ -32,7 +32,7 @@ export function DlmmSwap({ poolAddress }: DlmmSwapProps) {
     return <DlmmSwapSkeleton />
   }
 
-  const pair = formState.pair;
+  const pair = formState.pair
 
   return (
     <Tabs defaultValue="swap">
@@ -44,12 +44,7 @@ export function DlmmSwap({ poolAddress }: DlmmSwapProps) {
         </div>
       </TabsList>
       <TabsContent value="swap" forceMount>
-        <DlmmSwapForm
-          name={`${pair.mint_x.name}-${pair.mint_y.name}`}
-          address={pair.address}
-          mint_x={pair.mint_x}
-          mint_y={pair.mint_y}
-        />
+        <DlmmSwapForm address={pair.address} mint_x={pair.mint_x} mint_y={pair.mint_y} />
       </TabsContent>
     </Tabs>
   )

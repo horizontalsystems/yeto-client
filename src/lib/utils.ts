@@ -91,24 +91,28 @@ export function sortTokenMints(tokenX: PublicKey, tokenY: PublicKey) {
  * @param options - Additional formatting options
  * @returns Formatted number string
  */
-export function formatNumber(value: number | string | Decimal, decimals: number = 6, options: {
-  compact?: boolean;
-  minimumFractionDigits?: number;
-} = {}): string {
-  const decimalValue = new Decimal(value);
-  
+export function formatNumber(
+  value: number | string | Decimal,
+  decimals: number = 6,
+  options: {
+    compact?: boolean
+    minimumFractionDigits?: number
+  } = {}
+): string {
+  const decimalValue = new Decimal(value)
+
   // For very small numbers, use scientific notation
   if (decimalValue.abs().gt(0) && decimalValue.abs().lt(new Decimal('0.000001'))) {
-    return decimalValue.toExponential(decimals);
+    return decimalValue.toExponential(decimals)
   }
 
   const formatter = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: options.minimumFractionDigits ?? decimals,
     maximumFractionDigits: decimals,
     notation: options.compact ? 'compact' : 'standard'
-  });
+  })
 
-  return formatter.format(decimalValue.toNumber());
+  return formatter.format(decimalValue.toNumber())
 }
 
 /**
@@ -118,14 +122,14 @@ export function formatNumber(value: number | string | Decimal, decimals: number 
  * @returns Formatted price string
  */
 export function formatPrice(price: number | string | Decimal, decimals: number = 6): string {
-  const decimalPrice = new Decimal(price);
-  
+  const decimalPrice = new Decimal(price)
+
   // For very small numbers, use scientific notation
   if (decimalPrice.abs().gt(0) && decimalPrice.abs().lt(new Decimal('0.000001'))) {
-    return decimalPrice.toExponential(decimals);
+    return decimalPrice.toExponential(decimals)
   }
 
   return formatNumber(decimalPrice, decimals, {
     minimumFractionDigits: Math.min(decimals, 2)
-  });
+  })
 }
