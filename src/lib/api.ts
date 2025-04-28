@@ -12,10 +12,6 @@ export async function getPools(query: string) {
     apiUrl += `&search_term=${encodeURIComponent(query)}`
   }
 
-  // return await fetch(apiUrl)
-  //   .then(res => res.json())
-  //   .then(res => res.groups)
-  //
   const res = await fetch(apiUrl)
 
   if (!res.ok) {
