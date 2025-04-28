@@ -13,20 +13,13 @@ import { getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrice, percentage } from '@/lib/utils'
 import { SlippagePopover } from '@/components/slippage-popover'
+import { Pair } from '@/components/dlmm/dlmm'
 
 interface DlmmSwapFormProps {
-  address: string
-  mint_x: {
-    name: string
-    decimals: number
-  }
-  mint_y: {
-    name: string
-    decimals: number
-  }
+  pair: Pair
 }
 
-export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
+export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
   const [formState, setFormState] = useState<{ submitting: boolean; error?: string }>({
     submitting: false
@@ -42,8 +35,8 @@ export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(
-    () => DLMM.create(connection, new PublicKey(address)),
-    [connection, address]
+    () => DLMM.create(connection, new PublicKey(pair.address)),
+    [connection, pair.address]
   )
 
   useEffect(() => {
@@ -163,15 +156,19 @@ export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
   const inputX = (
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
-        <Info size="16" />
-        <span className="ms-2 font-medium">{mint_x.name}</span>
+        <img 
+          src={pair.mint_x.logo_url} 
+          alt={pair.mint_x.name}
+          className="h-5 w-5 rounded-full"
+        />
+        <span className="ms-2 font-medium">{pair.mint_x.name}</span>
       </div>
       <Input
         ref={amountXRef}
         type="number"
         step=".01"
         placeholder="0"
-        className="h-11 ps-10 text-right"
+        className="h-11 ps-16 text-right"
         disabled={formState.submitting}
         onChange={handleChangeX}
         required
@@ -182,15 +179,19 @@ export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
   const inputY = (
     <div className="relative flex grow-1">
       <div className="absolute inset-y-2 left-0 ms-3 flex items-center">
-        <Info size="16" />
-        <span className="ms-2 font-medium">{mint_y.name}</span>
+        <img 
+          src={pair.mint_y.logo_url} 
+          alt={pair.mint_y.name}
+          className="h-5 w-5 rounded-full"
+        />
+        <span className="ms-2 font-medium">{pair.mint_y.name}</span>
       </div>
       <Input
         ref={amountYRef}
         type="number"
         step=".01"
         placeholder="0"
-        className="h-11 ps-10 text-right"
+        className="h-11 ps-16 text-right"
         disabled={formState.submitting}
         onChange={handleChangeY}
         required
@@ -275,7 +276,7 @@ export function DlmmSwapForm({ address, mint_x, mint_y }: DlmmSwapFormProps) {
         )}
         <div className="text-gray space-y-1 text-right text-xs">
           <p>
-            1 {mint_x.name} ≈ {formatPrice(pricePerToken, mint_y.decimals)} {mint_y.name}
+            1 {pair.mint_x.name} ≈ {formatPrice(pricePerToken, pair.mint_y.decimals)} {pair.mint_y.name}
           </p>
         </div>
       </div>

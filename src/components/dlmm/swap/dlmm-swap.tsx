@@ -44,7 +44,7 @@ export function DlmmSwap({ poolAddress }: DlmmSwapProps) {
         </div>
       </TabsList>
       <TabsContent value="swap" forceMount>
-        <DlmmSwapForm address={pair.address} mint_x={pair.mint_x} mint_y={pair.mint_y} />
+        <DlmmSwapForm pair={pair} />
       </TabsContent>
     </Tabs>
   )
