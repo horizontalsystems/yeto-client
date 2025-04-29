@@ -12,7 +12,7 @@ import {
 export default async function DlmmSwapPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = await params
   return (
-    <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-2 sm:px-6 lg:px-8">
       <Breadcrumb className="mt-10 mb-4">
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
