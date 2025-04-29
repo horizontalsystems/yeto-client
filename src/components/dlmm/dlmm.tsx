@@ -78,7 +78,7 @@ export function Dlmm({ address }: { address: string }) {
 
       <div className="flex flex-1 flex-col gap-4 pt-0">
         <div className="bg-card w-full rounded-xl p-6 pb-4">
-          <div className="flex flex-row justify-between pb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:gap-0 pb-6">
             <div className="text-foreground flex items-center space-x-2 text-2xl uppercase">
               <div className="flex -space-x-1">
                 <img 
