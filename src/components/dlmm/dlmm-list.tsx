@@ -49,11 +49,12 @@ export function DlmmList() {
         <DlmmListSkeleton withSearchInput={false} />
       ) : (
         <div className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-          <div className="text-gray bg-card flex w-full border-t text-xs">
-            <div className="w-1/4 px-6 py-3 font-medium">Pool</div>
-            <div className="w-1/4 px-6 py-3 font-medium">TVL</div>
-            <div className="w-1/4 px-6 py-3 font-medium">24h Vol</div>
-            <div className="w-1/4 px-6 py-3 font-medium">24h Fee/TVL</div>
+          {/* Column titles - desktop only */}
+          <div className="text-gray bg-card hidden md:flex w-full border-t text-xs">
+            <div className="w-[40%] px-6 py-3 font-medium">Pool</div>
+            <div className="w-[20%] px-6 py-3 font-medium">TVL</div>
+            <div className="w-[20%] px-6 py-3 font-medium">24h Vol</div>
+            <div className="w-[20%] px-6 py-3 font-medium">24h Fee/TVL</div>
           </div>
           {data.map((pool: Pool, index: number) => {
             let tvl = 0
