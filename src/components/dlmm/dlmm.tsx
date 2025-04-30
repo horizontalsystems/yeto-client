@@ -59,7 +59,7 @@ export function Dlmm({ address }: { address: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-2 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
       <Breadcrumb className="mt-10 mb-4">
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
@@ -81,14 +81,14 @@ export function Dlmm({ address }: { address: string }) {
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:gap-0 pb-6">
             <div className="text-foreground flex items-center space-x-2 text-2xl uppercase">
               <div className="flex -space-x-1">
-                <img 
-                  src={pair.mint_x.logo_url} 
-                  alt={pair.mint_x.name} 
+                <img
+                  src={pair.mint_x.logo_url}
+                  alt={pair.mint_x.name}
                   className="h-8 w-8 rounded-full"
                 />
-                <img 
-                  src={pair.mint_y.logo_url} 
-                  alt={pair.mint_y.name} 
+                <img
+                  src={pair.mint_y.logo_url}
+                  alt={pair.mint_y.name}
                   className="h-8 w-8 rounded-full"
                 />
               </div>
