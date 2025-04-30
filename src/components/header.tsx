@@ -2,12 +2,13 @@ import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
 import { ButtonConnect } from '@/components/button-connect'
+import { HeaderLink } from '@/components/header-link'
 
 export function Header() {
   const navigation = [
-    { name: 'Pools', href: '/', current: true },
-    { name: 'My Board', href: '/my-board', current: false },
-    { name: 'How it works', href: '#', current: false }
+    { name: 'Pools', href: '/' },
+    { name: 'My Board', href: '/my-board' },
+    { name: 'How it works', href: '#' }
   ]
 
   return (
@@ -31,14 +32,14 @@ export function Header() {
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex items-center space-x-4">
                 {navigation.map(item => (
-                  <Link
+                  <HeaderLink
                     key={item.name}
                     href={item.href}
-                    aria-current={item.current ? 'page' : undefined}
-                    className={`${item.current ? 'text-white' : 'text-gray-300 hover:text-white'} px-3 py-2 text-sm font-medium`}
-                  >
-                    {item.name}
-                  </Link>
+                    name={item.name}
+                    className="px-3 py-2 text-sm font-medium"
+                    activeClass="text-leah"
+                    inactiveClass="text-gray hover:text-white"
+                  />
                 ))}
               </div>
             </div>
@@ -52,15 +53,14 @@ export function Header() {
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pt-2 pb-3">
           {navigation.map(item => (
-            <DisclosureButton
+            <HeaderLink
               key={item.name}
-              as="a"
               href={item.href}
-              aria-current={item.current ? 'page' : undefined}
-              className={`${item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} block rounded-md px-3 py-2 text-base font-medium`}
-            >
-              {item.name}
-            </DisclosureButton>
+              name={item.name}
+              className="block rounded-md px-3 py-2 text-base font-medium"
+              activeClass="bg-gray-900 text-leah"
+              inactiveClass="text-gray hover:bg-gray-700 hover:text-white"
+            />
           ))}
         </div>
       </DisclosurePanel>
