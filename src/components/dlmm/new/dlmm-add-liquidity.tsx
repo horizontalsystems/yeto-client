@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/new/dlmm-add-liquidity-skeleton'
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
-import { BinItem, DlmmLiquidityChart } from '@/components/dlmm/new/dlmm-liquidity-chart'
+import { BinItem, DlmmAddLiquidityBins } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
 import { binIdToBinArrayIndex, cn, formatPrice, percentage, percentageChange, toRounded } from '@/lib/utils'
 import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
@@ -402,7 +402,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             </ToggleGroup>
           </div>
         </div>
-        <DlmmLiquidityChart
+        <DlmmAddLiquidityBins
           binRange={binRange}
           binRangeRef={binRangeRef}
           binShiftRef={binShiftRef}

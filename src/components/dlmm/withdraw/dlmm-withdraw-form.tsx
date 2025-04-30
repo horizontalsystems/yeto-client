@@ -1,10 +1,10 @@
-import DLMM from '@yeto/dlmm/ts-client'
+import DLMM, { getBinArraysRequiredByPositionRange, getBinFromBinArray } from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SyntheticEvent, useEffect, useMemo, useState } from 'react'
+import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -12,6 +12,10 @@ import { ExternalLink, Info } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
+import { DlmmWithdrawBins } from '@/components/dlmm/withdraw/dlmm-withdraw-bins'
+import { BinItem } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
+import { binIdToBinArrayIndex } from '@/lib/utils'
+import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-skeleton'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -21,29 +25,23 @@ interface DlmmWithdrawFormProps {
 
 export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWithdrawFormProps) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
+  const [initializing, setInitializing] = useState(true)
   const [formState, setFormState] = useState<{ submitting: boolean; error?: string }>({
     submitting: false
   })
 
-  const [binRange, setBinRange] = useState([-34, 34])
   const [slippage, setSlippage] = useState(1)
+  const [activeBinId, setActiveBinId] = useState<number>(0)
+  const [bins, setBins] = useState<BinItem[]>([])
 
   const [amountPercent, setAmountPercent] = useState(100)
-
   const [tokenWithdraw, setTokenWithdraw] = useState('mint_x-mint_y')
+
+  const binRangeRef = useRef<number[]>([-34, 34])
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
-
-  useEffect(() => {
-    const sync = async () => {
-      const dlmmPool = await dlmmInstance
-      const position = await dlmmPool.getPosition(new PublicKey(positionAddress))
-      setBinRange([position.positionData.lowerBinId, position.positionData.upperBinId])
-    }
-    sync()
-  }, [connection, dlmmInstance, positionAddress])
 
   const handleWithdraw = async (v: SyntheticEvent) => {
     v.preventDefault()
@@ -59,8 +57,8 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
       const position = await dlmmPool.getPosition(new PublicKey(positionAddress))
       const activeBin = await dlmmPool.getActiveBin()
 
-      let fromBinId = binRange[0]
-      let toBinId = binRange[1]
+      let fromBinId = binRangeRef.current[0]
+      let toBinId = binRangeRef.current[1]
       let closePosition = false
 
       if (tokenWithdraw === 'mint_x') {
@@ -111,8 +109,67 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
     }
   }
 
+  const calculateBins = useCallback(async () => {
+    const pool = await dlmmInstance
+    const activeBin = await pool.getActiveBin()
+    const position = await pool.getPosition(new PublicKey(positionAddress))
+
+    const binRange = [position.positionData.lowerBinId, position.positionData.upperBinId]
+    binRangeRef.current = binRange
+    setActiveBinId(activeBin.binId)
+
+    const minBinId = new BN(binRange[0])
+    const maxBinId = new BN(binRange[1])
+
+    const binArraysRequired = getBinArraysRequiredByPositionRange(
+      new PublicKey(poolAddress),
+      minBinId,
+      maxBinId,
+      pool.program.programId
+    )
+
+    const publicKeys = binArraysRequired.map(i => i.key)
+    const binArrays = await pool.program.account.binArray.fetchMultiple(publicKeys)
+
+    const getBin = (binId: number) => {
+      const binArrayIdx = binIdToBinArrayIndex(new BN(binId))
+      const binArray = binArrays.find(ba => {
+        return ba?.index.eq(binArrayIdx)
+      })
+
+      return binArray ? getBinFromBinArray(binId, binArray) : null
+    }
+
+    const newBins = []
+
+    for (let i = minBinId.toNumber(); i <= maxBinId.toNumber(); i++) {
+      const bin = getBin(i)
+      const binItem = {
+        liquidity: bin ? bin.liquiditySupply.toString() : '0',
+        amountX: bin ? bin.amountX.toString() : '0',
+        amountY: bin ? bin.amountY.toString() : '0',
+        activeBin: activeBin.binId === i,
+        binId: i
+      }
+      newBins.push(binItem)
+    }
+
+    setBins(newBins)
+  }, [dlmmInstance, positionAddress, poolAddress])
+
   const increaseBy = (percent: number) => {
     return () => setAmountPercent(percent)
+  }
+
+  useEffect(() => {
+    setInitializing(true)
+    calculateBins().then(() => {
+      setInitializing(false)
+    })
+  }, [poolAddress])
+
+  if (initializing) {
+    return <DlmmWithdrawSkeleton />
   }
 
   return (
@@ -121,7 +178,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         <h2 className="text-lg font-semibold">Percentage to withdraw</h2>
         <SlippagePopover
           defaultValue={slippage.toString()}
-          onChange={(value) => setSlippage(parseFloat(value))}
+          onChange={value => setSlippage(parseFloat(value))}
           title="Slippage"
         />
       </div>
@@ -203,6 +260,13 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
           </div>
         </div>
       </div>
+
+      <DlmmWithdrawBins
+        binRangeRef={binRangeRef}
+        bins={bins}
+        activeBinId={activeBinId}
+        disabled={formState.submitting}
+      />
 
       <hr className="divider" />
       <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">

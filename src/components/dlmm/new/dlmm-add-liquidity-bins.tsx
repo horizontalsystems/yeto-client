@@ -12,7 +12,7 @@ export type BinItem = {
   binId: number
 }
 
-interface LiquidityChartsProps {
+interface AddLiquidityBinsProps {
   activeBinId: number
   strategy: string
   bins: BinItem[]
@@ -29,7 +29,7 @@ const colors = {
   tokenY: '#2848FF'
 }
 
-function DlmmLiquidityChart({
+export function DlmmAddLiquidityBins({
   bins,
   activeBinId,
   strategy,
@@ -38,7 +38,7 @@ function DlmmLiquidityChart({
   binRange,
   calculateBinsThrottle,
   disabled
-}: LiquidityChartsProps) {
+}: AddLiquidityBinsProps) {
   const [binsCopy, setBinsCopy] = useState<BinItem[]>([])
 
   const strategyCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -91,9 +91,9 @@ function DlmmLiquidityChart({
     const chart = strategyChartRef.current
     chart.data.labels = filtered.map(bin => bin.binId.toString())
     chart.data.datasets[0].data = filtered.map(bin => {
-      const distance = Math.abs(bin.binId - activeBinId)
       let range = 40
       if (strategy === 'Bid-Ask') {
+        const distance = Math.abs(bin.binId - activeBinId)
         range = bin.binId === activeBinId ? 1 : distance
       }
       return range
@@ -207,5 +207,3 @@ function createChart(ctx: CanvasRenderingContext2D, radius: number) {
     }
   })
 }
-
-export { DlmmLiquidityChart }
