@@ -235,7 +235,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const value = parseFloat(amount) || 0
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
-    if (quoteAmountRef.current) {
+    if (autoFill && quoteAmountRef.current) {
       quoteAmountRef.current.value = toRounded(
         parseFloat(pool.fromPricePerLamport(Number(activeBin.price))) * value
       ).toString()
@@ -255,7 +255,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     const value = parseFloat(amount) || 0
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
-    if (baseAmountRef.current) {
+    if (autoFill && baseAmountRef.current) {
       baseAmountRef.current.value = toRounded(
         value / parseFloat(pool.fromPricePerLamport(Number(activeBin.price)))
       ).toString()
