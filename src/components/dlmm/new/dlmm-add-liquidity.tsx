@@ -85,12 +85,12 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     }
 
     const amountX = parseFloat(baseAmountRef.current?.value || '')
-    if (!amountX || amountX <= 0) {
+    if (amountX < 0) {
       return setErrors({ ...errors, amountX: 'Amount X is required' })
     }
 
     const amountY = parseFloat(quoteAmountRef.current?.value || '')
-    if (!amountY || amountY <= 0) {
+    if (amountY < 0) {
       return setErrors({ ...errors, amountY: 'Amount Y is required' })
     }
 
