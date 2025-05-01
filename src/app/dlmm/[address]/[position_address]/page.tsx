@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { TvlChart } from '@/components/chart/tvl-chart'
+import { TvlVolumeChart } from '@/components/chart/tvl-volume-chart'
 import { Button } from '@/components/ui/button'
 import { Plus, Upload } from 'lucide-react'
 import { ButtonClaim } from '@/components/button-claim'
@@ -56,7 +56,7 @@ export default async function DlmmPositionPage({
                 </Button>
               </div>
             </div>
-            <TvlChart />
+            <TvlVolumeChart />
           </div>
           <div className="bg-card rounded-xl p-5">
             <div className="flex gap-2">

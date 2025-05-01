@@ -13,9 +13,9 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { toAmount, toPercent, truncate } from '@/lib/utils'
-import { TvlChart } from '@/components/chart/tvl-chart'
-import { VolumeChart } from '@/components/chart/volume-chart'
 import { DlmmSkeleton } from '@/components/dlmm/dlmm-skeleton'
+import { PriceChart } from '@/components/chart/price-chart'
+import { TradingVolumeChart } from '@/components/chart/trading-volume-chart'
 
 export type Pair = {
   address: string
@@ -78,21 +78,15 @@ export function Dlmm({ address }: { address: string }) {
 
       <div className="flex flex-1 flex-col gap-4 pt-0">
         <div className="bg-card w-full rounded-xl p-6 pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:gap-0 pb-6">
+          <div className="flex flex-col gap-4 pb-6 sm:flex-row sm:justify-between sm:gap-0">
             <div className="text-foreground flex items-center space-x-2 text-2xl uppercase">
               <div className="flex -space-x-1">
-                <img
-                  src={pair.mint_x.logo_url}
-                  alt={pair.mint_x.name}
-                  className="h-8 w-8 rounded-full"
-                />
-                <img
-                  src={pair.mint_y.logo_url}
-                  alt={pair.mint_y.name}
-                  className="h-8 w-8 rounded-full"
-                />
+                <img src={pair.mint_x.logo_url} alt={pair.mint_x.name} className="h-8 w-8 rounded-full" />
+                <img src={pair.mint_y.logo_url} alt={pair.mint_y.name} className="h-8 w-8 rounded-full" />
               </div>
-              <span>{pair.mint_x.name} / {pair.mint_y.name}</span>
+              <span>
+                {pair.mint_x.name} / {pair.mint_y.name}
+              </span>
             </div>
             <div className="flex space-x-3">
               <Link href={`/dlmm/swap/${address}`}>
@@ -178,50 +172,8 @@ export function Dlmm({ address }: { address: string }) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="bg-card aspect-5/2 rounded-xl p-6">
-            <div className="flex justify-between">
-              <div>
-                <div>Total Value Locked</div>
-                <div>{toAmount(pair.liquidity)}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm">1D</Button>
-                <Button size="sm" variant="outline" className="text-white">
-                  30D
-                </Button>
-                <Button size="sm" variant="outline" className="text-white">
-                  90D
-                </Button>
-                <Button size="sm" variant="outline" className="text-white">
-                  All
-                </Button>
-              </div>
-            </div>
-            <TvlChart />
-          </div>
-          <div className="bg-card aspect-5/2 rounded-xl">
-            <div className="bg-card aspect-5/2 rounded-xl p-6">
-              <div className="flex justify-between">
-                <div>
-                  <div>Swap Volume</div>
-                  <div></div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm">1D</Button>
-                  <Button size="sm" variant="outline" className="text-white">
-                    30D
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-white">
-                    90D
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-white">
-                    All
-                  </Button>
-                </div>
-              </div>
-              <VolumeChart />
-            </div>
-          </div>
+          <PriceChart poolAddress={address} />
+          <TradingVolumeChart poolAddress={address} />
         </div>
         <div className="bg-card min-h-[100vh] flex-1 rounded-xl p-6 md:min-h-min">Transactions</div>
       </div>

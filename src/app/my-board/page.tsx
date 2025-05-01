@@ -1,6 +1,6 @@
 'use client'
 
-import { TvlChart } from '@/components/chart/tvl-chart'
+import { TvlVolumeChart } from '@/components/chart/tvl-volume-chart'
 import { Button } from '@/components/ui/button'
 import { MyPoolList } from '@/components/my-board/my-pool-list'
 import { DepositChart } from '@/components/chart/deposit-chart'
@@ -30,10 +30,10 @@ export default function MyBoard() {
                 </Button>
               </div>
             </div>
-            <TvlChart />
+            <TvlVolumeChart />
           </div>
           <div className="bg-card rounded-xl p-5">
-          <DepositChart 
+          <DepositChart
             totalDeposit={15000.00}
             sections={[
               { percentage: 30, pairName: 'ETH/USDC' },
@@ -44,7 +44,7 @@ export default function MyBoard() {
           />
           </div>
           <div className="bg-card rounded-xl p-5">
-          <StatsCard 
+          <StatsCard
             unclaimedFee={20.30}
             impermanentLoss={926.32}
             averageApr={12.5}
