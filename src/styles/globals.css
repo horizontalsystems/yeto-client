@@ -12,8 +12,9 @@
   --color-leah: var(--leah);
   --color-jacob: var(--jacob);
 
-  --color-gray: #808085;
-  --color-bright: #EDEDED;
+  --color-gray: var(--gray);
+  --color-blue: var(--blue);
+  --color-bright: var(--bright);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

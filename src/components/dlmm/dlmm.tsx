@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { toAmount, toPercent, truncate } from '@/lib/utils'
 import { TvlChart } from '@/components/chart/tvl-chart'
-import { SwapVolumeChart } from '@/components/chart/swap-volume-chart'
+import { VolumeChart } from '@/components/chart/volume-chart'
 import { DlmmSkeleton } from '@/components/dlmm/dlmm-skeleton'
 
 export type Pair = {
@@ -219,7 +219,7 @@ export function Dlmm({ address }: { address: string }) {
                   </Button>
                 </div>
               </div>
-              <SwapVolumeChart />
+              <VolumeChart />
             </div>
           </div>
         </div>
