@@ -14,8 +14,8 @@ import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
 import { DlmmWithdrawBins } from '@/components/dlmm/withdraw/dlmm-withdraw-bins'
 import { BinItem } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
-import { binIdToBinArrayIndex } from '@/lib/utils'
 import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-skeleton'
+import { binIdToBinArrayIndex } from '@/lib/pool-utils'
 
 interface DlmmWithdrawFormProps {
   pair: Pair

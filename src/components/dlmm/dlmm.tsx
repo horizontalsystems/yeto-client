@@ -1,5 +1,6 @@
 'use client'
 
+import Decimal from 'decimal.js'
 import Link from 'next/link'
 import {
   Breadcrumb,
@@ -12,13 +13,14 @@ import {
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { toAmount, toPercent, truncate } from '@/lib/utils'
+import { formatPrice, formatUsd, toPercent, truncate } from '@/lib/utils'
 import { DlmmSkeleton } from '@/components/dlmm/dlmm-skeleton'
 import { PriceChart } from '@/components/chart/price-chart'
 import { TradingVolumeChart } from '@/components/chart/trading-volume-chart'
 
 export type Pair = {
   address: string
+  current_price: string
   mint_x: {
     address: string
     name: string
@@ -56,6 +58,11 @@ export function Dlmm({ address }: { address: string }) {
 
   if (!pair) {
     return <DlmmSkeleton />
+  }
+
+  let feeTvlRatio = new Decimal(0)
+  if (pair.fees['hour_24'] && pair.liquidity) {
+    feeTvlRatio = new Decimal(pair.fees['hour_24'] || 0).div(new Decimal(pair.liquidity || 0))
   }
 
   return (
@@ -105,7 +112,7 @@ export function Dlmm({ address }: { address: string }) {
             <div>
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">Total Value Locked</span>
-                <span className="text-foreground font-semibold">{toAmount(pair.liquidity)}</span>
+                <span className="text-foreground font-semibold">{formatUsd(pair.liquidity)}</span>
               </div>
               <div className="border-t py-2">
                 <div>
@@ -121,9 +128,7 @@ export function Dlmm({ address }: { address: string }) {
             <div>
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">24H Fee/TVL</span>
-                <span className="text-foreground font-semibold">
-                  {parseFloat(pair.fees['24h']) / parseFloat(pair.liquidity) || 0}
-                </span>
+                <span className="text-foreground font-semibold">{toPercent(feeTvlRatio.toString())}</span>
               </div>
               <div className="border-t py-2">
                 <div>
@@ -139,7 +144,9 @@ export function Dlmm({ address }: { address: string }) {
             <div>
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">Allocation {pair.mint_x.name}</span>
-                <span className="text-foreground font-semibold">{toAmount(pair.reserve_x_amount)}</span>
+                <span className="text-foreground font-semibold">
+                  {formatPrice(new Decimal(pair.reserve_x_amount).div(10 ** pair.mint_x.decimals || 0))}
+                </span>
               </div>
               <div className="border-t py-2">
                 <div>
@@ -148,14 +155,16 @@ export function Dlmm({ address }: { address: string }) {
                 </div>
                 <div>
                   <span className="text-muted-foreground text-sm">24H Fee</span>
-                  <span className="ps-2 text-sm text-white">{toAmount(pair.fees['24h'])}</span>
+                  <span className="ps-2 text-sm text-white">{formatUsd(pair.fees['hour_24'])}</span>
                 </div>
               </div>
             </div>
             <div>
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">Allocation {pair.mint_y.name}</span>
-                <span className="text-foreground font-semibold">{toAmount(pair.reserve_y_amount)}</span>
+                <span className="text-foreground font-semibold">
+                  {formatPrice(new Decimal(pair.reserve_y_amount).div(10 ** pair.mint_y.decimals || 0))}
+                </span>
               </div>
               <div className="border-t py-2">
                 <div>
@@ -172,8 +181,11 @@ export function Dlmm({ address }: { address: string }) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <PriceChart poolAddress={address} />
-          <TradingVolumeChart poolAddress={address} />
+          <PriceChart
+            poolAddress={address}
+            currentPrice={formatPrice(pair.current_price) + ' ' + pair.mint_x.name + '/' + pair.mint_y.name}
+          />
+          <TradingVolumeChart poolAddress={address} volume24h={formatUsd(pair.volume['hour_24'])} />
         </div>
         <div className="bg-card min-h-[100vh] flex-1 rounded-xl p-6 md:min-h-min">Transactions</div>
       </div>

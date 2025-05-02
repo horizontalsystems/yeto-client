@@ -9,14 +9,14 @@ import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
 import { ApiCoinItem } from '@/lib/api'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { cn, derivePresetParameter } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { BN } from '@coral-xyz/anchor'
 import { DLMM_PROGRAM_IDS } from '@/lib/constants'
 import { omit } from 'es-toolkit/compat'
 import { ButtonConnect } from '@/components/button-connect'
 import { toast } from 'sonner'
-import { baseFeePercentages, binStepsByBaseFee } from '@/lib/pool-utils'
+import { baseFeePercentages, binStepsByBaseFee, derivePresetParameter } from '@/lib/pool-utils'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void

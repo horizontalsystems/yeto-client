@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useChartData } from '@/hooks/use-chart-data'
 import { Button } from '@/components/ui/button'
-import { toAmount } from '@/lib/utils'
+import { formatUsd } from '@/lib/utils'
 import { AreaChartContainer } from '@/components/chart/area-chart-container'
 
 const chartConfig = {
@@ -21,8 +21,8 @@ export function TvlVolumeChart() {
     <div className="bg-card rounded-xl p-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:gap-2">
         <div className="h-12">
-          <div>Total Value Locked</div>
-          <div>{toAmount(lastItem ? lastItem['value'] : 0 || 0)} </div>
+          <div className="text-gray text-sm">Total Value Locked</div>
+          <div>{formatUsd(lastItem ? lastItem['value'] : 0 || 0)} </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {['1D', '30D', '90D', 'all'].map(i => (

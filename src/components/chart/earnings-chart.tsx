@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { toAmount } from '@/lib/utils'
+import { formatUsd } from '@/lib/utils'
 import { AreaChartContainer } from '@/components/chart/area-chart-container'
 
 const chartConfig = {
@@ -45,8 +45,8 @@ export function EarningsChart() {
     <div className="bg-card col-span-2 flex flex-col justify-between rounded-xl p-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:gap-2">
         <div className="h-12">
-          <div>Total Earnings</div>
-          <div>{toAmount(lastItem ? lastItem['value'] : 0 || 0)} </div>
+          <div className="text-gray text-sm">Total Earnings</div>
+          <div>{formatUsd(lastItem ? lastItem['value'] : 0 || 0)} </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {['1D', '30D', '90D', 'all'].map(i => (

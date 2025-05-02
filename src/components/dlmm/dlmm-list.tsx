@@ -54,7 +54,7 @@ export function DlmmList() {
             <div className="w-[40%] px-6 py-3 font-medium">Pool</div>
             <div className="w-[20%] px-6 py-3 font-medium">TVL</div>
             <div className="w-[20%] px-6 py-3 font-medium">24h Vol</div>
-            <div className="w-[20%] px-6 py-3 font-medium">24h Fee/TVL</div>
+            <div className="w-[20%] px-6 py-3 font-medium">APR</div>
           </div>
           {data.map((pool: Pool, index: number) => {
             let tvl = 0
@@ -66,7 +66,7 @@ export function DlmmList() {
             for (let i = 0; i < pool.pairs.length; i += 1) {
               const pair = pool.pairs[i]
               tvl += parseFloat(pair.liquidity) || 0
-              volume += parseFloat(pair.volume['24h']) || 0
+              volume += parseFloat(pair.volume['hour_24']) || 0
               apr += parseFloat(pair.apr) || 0
               pairs.push(pair)
             }

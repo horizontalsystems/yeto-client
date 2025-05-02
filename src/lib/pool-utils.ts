@@ -51,6 +51,32 @@ export async function createBalancePosition(
   }
 }
 
+export function binIdToBinArrayIndex(binId: BN): BN {
+  const MAX_BIN_ARRAY_SIZE = new BN(70)
+  const { div: idx, mod } = binId.divmod(MAX_BIN_ARRAY_SIZE)
+  return binId.isNeg() && mod != 0 ? idx.sub(new BN(1)) : idx
+}
+
+export function u16ToBuffer(value: number): Buffer {
+  const buffer = Buffer.alloc(2)
+  buffer.writeUInt16LE(value, 0)
+  return buffer
+}
+
+export function derivePresetParameter(programId: PublicKey, binStep: number, baseFactor: number) {
+  const [publicKey] = PublicKey.findProgramAddressSync(
+    [Buffer.from('preset_parameter', 'utf8'), u16ToBuffer(binStep), u16ToBuffer(baseFactor)],
+    programId
+  )
+
+  return publicKey
+}
+
+export function sortTokenMints(tokenX: PublicKey, tokenY: PublicKey) {
+  const [minKey, maxKey] = tokenX.toBuffer().compare(tokenY.toBuffer()) == 1 ? [tokenY, tokenX] : [tokenX, tokenY]
+  return [minKey, maxKey]
+}
+
 export async function getBalance(connection: Connection, walletPubkey: PublicKey, tokenPubkey: PublicKey) {
   try {
     if (tokenPubkey.toBase58() === SOL_TOKEN_MINT) {
