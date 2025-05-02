@@ -9,7 +9,7 @@ export type ApiCoinItem = {
 export async function getPools(query: string) {
   let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=0&limit=10&sort_key=liquidity&order_by=desc`
   if (query.length) {
-    apiUrl += `&search_term=${encodeURIComponent(query)}`
+    apiUrl += `&q=${encodeURIComponent(query)}`
   }
 
   const res = await fetch(apiUrl)
