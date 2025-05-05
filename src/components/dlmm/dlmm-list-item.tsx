@@ -27,13 +27,13 @@ export function DlmmListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
               <div className="p-4 md:hidden">
                 <div className="mb-4 flex items-center gap-2">
                   <div className="flex flex-col">
-                    <div className="text-muted-foreground flex gap-3 text-sm">
+                    <div className="flex gap-3 text-sm">
                       <span className="text-sm">
-                        <span>Bin Step</span>
+                        <span className="text-gray">Bin Step</span>
                         <span className="text-leah ms-1">{pair.bin_step}</span>
                       </span>
                       <span className="ms-2 text-sm">
-                        <span className="text-steel">Fee</span>
+                        <span className="text-gray">Fee</span>
                         <span className="text-leah ms-1">{parseFloat(pair.base_fee_percentage) * 100}%</span>
                       </span>
                     </div>

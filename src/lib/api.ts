@@ -23,6 +23,20 @@ export async function getPools(query: string) {
   return data.groups
 }
 
+export async function getPoolsByAddress(addresses: string[]) {
+  if (!addresses.length) {
+    return []
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/by_address?addresses=${addresses.join(',')}`)
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch pools')
+  }
+
+  return await res.json()
+}
+
 export async function searchCoins(query: string) {
   const items = await fetch('https://search.jup.ag/multi_search', {
     method: 'POST',
@@ -89,7 +103,7 @@ export async function searchCoins(query: string) {
         address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
         name: 'USDC',
         symbol: 'USDC',
-        decimals: 8,
+        decimals: 6,
         logoURI:
           'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
       })

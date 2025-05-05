@@ -66,7 +66,7 @@ export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: str
   }
 
   return (
-    <Button className="cursor-pointer" onClick={handleClaim} disabled={formState.submitting}>
+    <Button variant="light" size="sm" className="cursor-pointer" onClick={handleClaim} disabled={formState.submitting}>
       Claim Fee
     </Button>
   )
