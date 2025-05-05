@@ -149,7 +149,13 @@ export function MyPoolList() {
         </div>
         {positions.map((pool, index: number) => {
           return (
-            <MyPoolListItem key={index} pair={pool.pair} positions={pool.positions} onClosePosition={onClosePosition} />
+            <MyPoolListItem
+              key={index}
+              pair={pool.pair}
+              positions={pool.positions}
+              onClosePosition={onClosePosition}
+              isLoading={formState.submitting}
+            />
           )
         })}
         {positions.length < 1 && <div className="p-6">No positions</div>}
