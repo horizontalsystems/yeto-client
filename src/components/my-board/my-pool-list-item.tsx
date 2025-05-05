@@ -21,6 +21,7 @@ export type Position = {
 export type PoolItemProps = {
   pair: Pair
   positions: Position[]
+  isLoading: boolean
   onClosePosition: (address: string, positionAddress: string) => Promise<void>
 }
 
