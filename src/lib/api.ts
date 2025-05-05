@@ -89,6 +89,7 @@ export async function searchCoins(query: string) {
         address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
         name: 'USDC',
         symbol: 'USDC',
+        decimals: 6,
         logoURI:
           'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
       })
