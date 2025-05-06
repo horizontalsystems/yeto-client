@@ -27,7 +27,7 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
         setLiqState({ loading: false })
       })
       .catch(async err => {
-        if (retry && retry >= 3) {
+        if (retry && retry <= 3) {
           await sleep(1000)
           await fetchPair(addr, retry + 1)
         } else {
