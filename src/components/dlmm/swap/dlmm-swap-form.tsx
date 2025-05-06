@@ -2,11 +2,11 @@ import DLMM from '@yeto/dlmm/ts-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
-import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { ExternalLink } from 'lucide-react'
+import { ArrowDownUp, ExternalLink } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
@@ -28,31 +28,29 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const [balances, setBalances] = useState<{ valueX?: number; valueY?: number }>({})
   const [pricePerToken, setPricePerToken] = useState(0)
   const [slippage, setSlippage] = useState(0.1)
+  const [isTokenYisMain, setIsTokenYisMain] = useState(false)
 
-  const amountXRef = useRef<HTMLInputElement | null>(null)
-  const amountYRef = useRef<HTMLInputElement | null>(null)
+  const [amountX, setAmountX] = useState('')
+  const [amountY, setAmountY] = useState('')
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
 
   useEffect(() => {
-    const sync = async () => {
+    const syncBalances = async () => {
       const dlmmPool = await dlmmInstance
       const activeBin = await dlmmPool.getActiveBin()
-
       setPricePerToken(parseFloat(dlmmPool.fromPricePerLamport(Number(activeBin.price))))
 
-      if (!walletPubKey) {
-        return
-      }
+      if (!walletPubKey) return
 
       setBalances({
         valueX: await getBalance(connection, walletPubKey, dlmmPool.tokenX.publicKey),
         valueY: await getBalance(connection, walletPubKey, dlmmPool.tokenY.publicKey)
       })
     }
-    sync()
+    syncBalances()
   }, [connection, dlmmInstance, walletPubKey])
 
   const handleSwap = async (v: SyntheticEvent) => {
@@ -63,30 +61,36 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
     }
 
     try {
-      const amountX = parseFloat(amountXRef.current?.value || '')
-      if (!amountX) {
-        return toast.error('Token x amount is empty')
+      const parsedAmountX = parseFloat(amountX)
+      const parsedAmountY = parseFloat(amountY)
+      if (!parsedAmountX || !parsedAmountY) {
+        return toast.error('Please enter valid amounts')
       }
+
       setFormState({ submitting: true })
 
       const dlmmPool = await dlmmInstance
-      const swapAmount = new BN(amountX * 10 ** dlmmPool.tokenX.decimal)
+      const swapAmount = new BN(
+        isTokenYisMain ? parsedAmountY * 10 ** dlmmPool.tokenY.decimal : parsedAmountX * 10 ** dlmmPool.tokenX.decimal
+      )
 
-      const swapXtoY = true // Quote token as input
+      const swapXtoY = !isTokenYisMain
       const binArrays = await dlmmPool.getBinArrayForSwap(swapXtoY)
 
       const slippageBps = new BN(Math.round(slippage * 10_000))
       const swapQuote = dlmmPool.swapQuote(swapAmount, swapXtoY, slippageBps, binArrays)
 
-      // Swap
+      const inToken = isTokenYisMain ? dlmmPool.tokenY.publicKey : dlmmPool.tokenX.publicKey
+      const outToken = isTokenYisMain ? dlmmPool.tokenX.publicKey : dlmmPool.tokenY.publicKey
+
       const swapTx = await dlmmPool.swap({
-        inToken: dlmmPool.tokenX.publicKey,
+        inToken,
         binArraysPubkey: swapQuote.binArraysPubkey,
         inAmount: swapAmount,
         lbPair: dlmmPool.pubkey,
         user: walletPubKey,
         minOutAmount: swapQuote.minOutAmount,
-        outToken: dlmmPool.tokenY.publicKey
+        outToken
       })
 
       const signature = await sendTransaction(swapTx, connection)
@@ -106,46 +110,44 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
       })
     } catch (e) {
       let error = 'Failed to swap'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
+      if (e instanceof Error) error = e.message
       setFormState({ submitting: false, error })
-      toast.error('Swap failed', {
-        description: error
-      })
+      toast.error('Swap failed', { description: error })
     }
   }
 
-  const handleChangeX = (v: ChangeEvent<HTMLInputElement>) => {
-    const { value } = v.target
-    if (amountYRef.current) {
-      amountYRef.current.value = value ? String((parseFloat(value) * pricePerToken).toFixed(2)) : ''
+  const handleChangeX = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+    setAmountX(value)
+    const parsed = parseFloat(value)
+    if (!isNaN(parsed)) {
+      setAmountY((parsed * pricePerToken).toFixed(2))
+    } else {
+      setAmountY('')
     }
   }
 
-  const handleChangeY = (v: ChangeEvent<HTMLInputElement>) => {
-    const { value } = v.target
-    if (amountXRef.current) {
-      amountXRef.current.value = value ? String((parseFloat(value) / pricePerToken).toFixed(2)) : ''
+  const handleChangeY = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+    setAmountY(value)
+    const parsed = parseFloat(value)
+    if (!isNaN(parsed)) {
+      setAmountX((parsed / pricePerToken).toFixed(2))
+    } else {
+      setAmountX('')
     }
   }
 
   const increaseBy = (percent: number) => {
     return () => {
       const { valueX, valueY } = balances
-      if (valueX && valueX > 0) {
-        const newXAmount = percentage(percent, valueX)
-        if (!valueY || newXAmount * pricePerToken > valueY) {
-          return toast.error('Insufficient TokenY amount')
-        } else {
-          if (amountXRef.current) {
-            amountXRef.current.value = newXAmount.toString()
-          }
-          if (amountYRef.current) {
-            amountYRef.current.value = (newXAmount * pricePerToken).toFixed(2).toString()
-          }
-        }
+      if (!isTokenYisMain && valueX && valueX > 0) {
+        const newX = percentage(percent, valueX)
+        setAmountX(newX.toString())
+        setAmountY((newX * pricePerToken).toFixed(2))
+      }
+      if (isTokenYisMain && valueY && valueY > 0) {
+        const newY = percentage(percent, valueY)
+        setAmountY(newY.toString())
+        setAmountX((newY / pricePerToken).toFixed(2))
       }
     }
   }
@@ -157,13 +159,13 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         <span className="ms-2 font-medium">{pair.mint_x.name}</span>
       </div>
       <Input
-        ref={amountXRef}
         type="number"
         step=".01"
         placeholder="0"
         className="h-11 ps-16 text-right"
         disabled={formState.submitting}
         onChange={handleChangeX}
+        value={amountX}
         required
       />
     </div>
@@ -176,15 +178,27 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         <span className="ms-2 font-medium">{pair.mint_y.name}</span>
       </div>
       <Input
-        ref={amountYRef}
         type="number"
         step=".01"
         placeholder="0"
         className="h-11 ps-16 text-right"
         disabled={formState.submitting}
         onChange={handleChangeY}
+        value={amountY}
         required
       />
+    </div>
+  )
+
+  const balanceY = (
+    <div className="text-gray flex text-xs">
+      Balance: {balances.valueY === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueY}
+    </div>
+  )
+
+  const balanceX = (
+    <div className="text-gray flex text-xs">
+      Balance: {balances.valueX === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueX}
     </div>
   )
 
@@ -199,60 +213,33 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         />
       </div>
       <div className="mb-4 space-y-2">
-        {inputX}
+        {isTokenYisMain ? inputY : inputX}
         <div className="flex items-center justify-between px-1">
-          <div className="text-muted-foreground flex text-xs">
-            Balance: {balances.valueX === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueX}
-          </div>
+          {isTokenYisMain ? balanceY : balanceX}
           <div className="flex space-x-1">
             <ToggleGroup type="single" className="flex space-x-2" disabled={formState.submitting}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="bg-bran h-6 cursor-pointer px-2 text-xs"
-                onClick={increaseBy(25)}
-              >
-                25%
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="bg-bran h-6 cursor-pointer px-2 text-xs"
-                onClick={increaseBy(50)}
-              >
-                50%
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="bg-bran h-6 cursor-pointer px-2 text-xs"
-                onClick={increaseBy(75)}
-              >
-                75%
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="bg-bran h-6 cursor-pointer px-2 text-xs"
-                onClick={increaseBy(100)}
-              >
-                Max
-              </Button>
+              {[25, 50, 75, 100].map(p => (
+                <Button
+                  key={p}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="bg-bran h-6 cursor-pointer px-2 text-xs"
+                  onClick={increaseBy(p)}
+                >
+                  {p}%
+                </Button>
+              ))}
             </ToggleGroup>
           </div>
         </div>
       </div>
+      <div className="mb-5 flex justify-center">
+        <ArrowDownUp className="cursor-pointer" onClick={() => setIsTokenYisMain(!isTokenYisMain)} />
+      </div>
       <div className="mb-6 space-y-2">
-        {inputY}
-        <div className="px-1">
-          <div className="text-gray flex text-xs">
-            Balance: {balances.valueY === undefined ? <Skeleton className="ms-2 h-4 w-20" /> : balances.valueY}
-          </div>
-        </div>
+        {isTokenYisMain ? inputX : inputY}
+        <div className="px-1">{isTokenYisMain ? balanceX : balanceY}</div>
       </div>
       <hr className="divider" />
       <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
