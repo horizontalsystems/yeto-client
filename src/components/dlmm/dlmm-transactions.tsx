@@ -4,20 +4,22 @@ import { useQuery } from '@tanstack/react-query'
 import { getPoolTransactions } from '@/lib/api'
 import { cn, formatPrice } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ExternalLink } from 'lucide-react'
 
 export type Transaction = {
   signature: string
   type: string
-  amountIn: {
+  amount_usdc: string
+  amount_in: {
     amount: string
     token_logo: string
   }
-  amountOut: {
+  amount_out: {
     amount: string
     token_logo: string
   }
-  startPrice: string
-  endPrice: string
+  start_price: string
+  end_price: string
   time: string
 }
 
@@ -45,17 +47,27 @@ export function DlmmTransactions({ address }: { address: string }) {
         {data.map((item: Transaction, index: number) => {
           return (
             <div key={index} className="flex w-full items-center border-t">
-              <div className="text-leah w-2/5 px-6 py-3">{item.type}</div>
-              <div className="flex w-1/5 items-center gap-2 px-6 py-3">
-                {formatPrice(item.amountOut.amount)}
-                <img src={item.amountOut.token_logo} alt="" className="h-7 w-7 rounded-full" />
+              <div
+                className={cn('flex w-2/5 items-center gap-2 px-6 py-3', {
+                  'text-green': item.type.startsWith('Buy'),
+                  'text-sunset': item.type.startsWith('Sell')
+                })}
+              >
+                <span>{item.type}</span>
+                <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${item.signature}`}>
+                  <ExternalLink size="18" />
+                </a>
               </div>
               <div className="flex w-1/5 items-center gap-2 px-6 py-3">
-                {formatPrice(item.amountIn.amount)}
-                <img src={item.amountIn.token_logo} alt="" className="h-7 w-7 rounded-full" />
+                {formatPrice(item.amount_in.amount)}
+                <img src={item.amount_in.token_logo} alt="" className="h-7 w-7 rounded-full" />
+              </div>
+              <div className="flex w-1/5 items-center gap-2 px-6 py-3">
+                {formatPrice(item.amount_out.amount)}
+                <img src={item.amount_out.token_logo} alt="" className="h-7 w-7 rounded-full" />
               </div>
               <div className="w-1/5 px-6 py-3">
-                {formatPrice(item.startPrice)}-{formatPrice(item.endPrice)}
+                {formatPrice(item.start_price)}-{formatPrice(item.end_price)}
               </div>
               <div className="w-1/5 px-6 py-3">{new Date(item.time).toLocaleDateString()}</div>
             </div>
