@@ -107,7 +107,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         new BN(activeBinId + binRangeRef.current[1] - binShiftRef.current),
         walletPubKey,
         connection,
-        strategy === 'Spot' ? StrategyType.SpotBalanced : StrategyType.BidAskBalanced
+        strategy === 'Spot' ? StrategyType.SpotImBalanced : StrategyType.BidAskImBalanced
       )
 
       const signature = await sendTransaction(createPositionTx, connection, {
