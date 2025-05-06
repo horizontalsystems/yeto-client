@@ -37,6 +37,20 @@ export async function getPoolsByAddress(addresses: string[]) {
   return await res.json()
 }
 
+export async function getPoolTransactions(address: string) {
+  if (!address) {
+    return []
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/transactions/${address}`)
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch transactions')
+  }
+
+  return await res.json()
+}
+
 export async function searchCoins(query: string) {
   const items = await fetch('https://search.jup.ag/multi_search', {
     method: 'POST',

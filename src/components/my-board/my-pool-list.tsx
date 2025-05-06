@@ -18,7 +18,7 @@ type MyPair = {
   positions: Position[]
 }
 
-export function MyPoolList() {
+export function MyPoolList({ poolAddress }: { poolAddress?: string }) {
   const { publicKey: walletPubKey, sendTransaction } = useWallet()
   const [positions, setPositions] = useState<MyPair[]>([])
   const [loading, setLoading] = useState(true)
@@ -90,10 +90,12 @@ export function MyPoolList() {
       const items: MyPair[] = []
       const pools: { [key: string]: Pair } = await getPoolsByAddress(pairPositions.keys().toArray())
 
-      pairPositions.entries().forEach(([poolAddress, info]) => {
-        const pair = pools[poolAddress]
-        if (!pair) {
-          return
+      const entries = pairPositions.entries()
+
+      for (const [address, info] of entries) {
+        const pair = pools[address]
+        if (!pair || poolAddress && poolAddress !== address) {
+          continue
         }
 
         items.push({
@@ -124,7 +126,7 @@ export function MyPoolList() {
             }
           })
         })
-      })
+      }
 
       setPositions(items)
       setLoading(false)
@@ -134,32 +136,30 @@ export function MyPoolList() {
   }, [connection, walletPubKey])
 
   if (loading) {
-    return <DlmmListSkeleton withSearchInput />
+    return <DlmmListSkeleton withSearchInput={false} />
   }
 
   return (
-    <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
-      <div className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-        <div className="text-gray bg-card flex w-full border-t text-xs">
-          <div className="w-2/4 px-6 py-3 font-medium">Pool</div>
-          <div className="w-1/4 px-6 py-3 font-medium">Total Deposit</div>
-          <div className="w-1/4 px-6 py-3 font-medium">Unclaimed Fee</div>
-          <div className="w-1/4 px-6 py-3 font-medium">APR (24h)</div>
-          <div className="w-1/4 px-6 py-3 font-medium">Current Price</div>
-        </div>
-        {positions.map((pool, index: number) => {
-          return (
-            <MyPoolListItem
-              key={index}
-              pair={pool.pair}
-              positions={pool.positions}
-              onClosePosition={onClosePosition}
-              isLoading={formState.submitting}
-            />
-          )
-        })}
-        {positions.length < 1 && <div className="p-6">No positions</div>}
+    <div className="w-full text-sm">
+      <div className="text-gray bg-card flex w-full text-xs">
+        <div className="w-2/4 px-6 py-3 font-medium">Pool</div>
+        <div className="w-1/4 px-6 py-3 font-medium">Total Deposit</div>
+        <div className="w-1/4 px-6 py-3 font-medium">Unclaimed Fee</div>
+        <div className="w-1/4 px-6 py-3 font-medium">APR (24h)</div>
+        <div className="w-1/4 px-6 py-3 font-medium">Current Price</div>
       </div>
+      {positions.map((pool, index: number) => {
+        return (
+          <MyPoolListItem
+            key={index}
+            pair={pool.pair}
+            positions={pool.positions}
+            onClosePosition={onClosePosition}
+            isLoading={formState.submitting}
+          />
+        )
+      })}
+      {positions.length < 1 && <div className="p-6">No positions</div>}
     </div>
   )
 }

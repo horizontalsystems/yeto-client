@@ -17,6 +17,9 @@ import { formatPrice, formatUsd, toPercent, truncate } from '@/lib/utils'
 import { DlmmSkeleton } from '@/components/dlmm/dlmm-skeleton'
 import { PriceChart } from '@/components/chart/price-chart'
 import { TradingVolumeChart } from '@/components/chart/trading-volume-chart'
+import { DlmmTransactions } from '@/components/dlmm/dlmm-transactions'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MyPoolList } from '@/components/my-board/my-pool-list'
 
 export type Pair = {
   address: string
@@ -187,7 +190,26 @@ export function Dlmm({ address }: { address: string }) {
           />
           <TradingVolumeChart poolAddress={address} volume24h={formatUsd(pair.volume['hour_24'])} />
         </div>
-        <div className="bg-card min-h-[100vh] flex-1 rounded-xl p-6 md:min-h-min">Transactions</div>
+        <div className="bg-card mb-10 rounded-xl">
+          <Tabs defaultValue="transactions" defaultChecked>
+            <TabsList>
+              <div className="flex flex-row border-b">
+                <TabsTrigger value="transactions" className="p-6">
+                  Transactions
+                </TabsTrigger>
+                <TabsTrigger value="my-positions" className="p-6">
+                  My positions
+                </TabsTrigger>
+              </div>
+            </TabsList>
+            <TabsContent value="transactions" forceMount>
+              <DlmmTransactions address={address} />
+            </TabsContent>
+            <TabsContent value="my-positions" forceMount>
+              <MyPoolList poolAddress={pair.address} />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   )
