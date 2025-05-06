@@ -11,6 +11,7 @@ export async function createBalancePosition(
   minBinId: BN,
   maxBinId: BN,
   user: PublicKey,
+  slippage: number,
   connection: Connection,
   strategy: StrategyType
 ) {
@@ -38,6 +39,7 @@ export async function createBalancePosition(
     user: user,
     totalXAmount,
     totalYAmount,
+    slippage,
     strategy: {
       maxBinId,
       minBinId,

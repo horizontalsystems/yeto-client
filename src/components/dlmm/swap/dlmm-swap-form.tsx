@@ -77,7 +77,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
       const swapXtoY = !isTokenYisMain
       const binArrays = await dlmmPool.getBinArrayForSwap(swapXtoY)
 
-      const slippageBps = new BN(Math.round(slippage * 10_000))
+      const slippageBps = new BN(Math.round(slippage * 100))
       const swapQuote = dlmmPool.swapQuote(swapAmount, swapXtoY, slippageBps, binArrays)
 
       const inToken = isTokenYisMain ? dlmmPool.tokenY.publicKey : dlmmPool.tokenX.publicKey

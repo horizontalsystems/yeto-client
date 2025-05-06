@@ -75,7 +75,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
 
-  const [slippage, setSlippage] = useState('0.5')
+  const [slippage, setSlippage] = useState(0.5)
 
   const handleSubmit = async (v: SyntheticEvent) => {
     v.preventDefault()
@@ -106,6 +106,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         new BN(activeBinId + binRangeRef.current[0] - binShiftRef.current),
         new BN(activeBinId + binRangeRef.current[1] - binShiftRef.current),
         walletPubKey,
+        Math.round(slippage * 100),
         connection,
         strategy === 'Spot' ? StrategyType.SpotImBalanced : StrategyType.BidAskImBalanced
       )
@@ -147,20 +148,23 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     setActiveBinId(activeBin.binId)
   }, [dlmmInstance])
 
-  const calculatePriceRange = useCallback(async (minBin: number, maxBin: number, binPrice: string, binStep: number) => {
-    const startPrice = getPriceOfBinByBinId(minBin, binStep)
-    const startPriceChange = percentageChange(binPrice, startPrice.toNumber())
-    const endPrice = getPriceOfBinByBinId(maxBin, binStep)
-    const endPriceChange = percentageChange(binPrice, endPrice.toNumber())
-    const pool = await dlmmInstance
+  const calculatePriceRange = useCallback(
+    async (minBin: number, maxBin: number, binPrice: string, binStep: number) => {
+      const startPrice = getPriceOfBinByBinId(minBin, binStep)
+      const startPriceChange = percentageChange(binPrice, startPrice.toNumber())
+      const endPrice = getPriceOfBinByBinId(maxBin, binStep)
+      const endPriceChange = percentageChange(binPrice, endPrice.toNumber())
+      const pool = await dlmmInstance
 
-    setPriceRange({
-      minPrice: Number(pool.fromPricePerLamport(startPrice.toNumber())),
-      minPriceChange: toRounded(startPriceChange || 0),
-      maxPrice: Number(pool.fromPricePerLamport(endPrice.toNumber())),
-      maxPriceChange: toRounded(endPriceChange || 0)
-    })
-  }, [dlmmInstance])
+      setPriceRange({
+        minPrice: Number(pool.fromPricePerLamport(startPrice.toNumber())),
+        minPriceChange: toRounded(startPriceChange || 0),
+        maxPrice: Number(pool.fromPricePerLamport(endPrice.toNumber())),
+        maxPriceChange: toRounded(endPriceChange || 0)
+      })
+    },
+    [dlmmInstance]
+  )
 
   const syncBalance = useCallback(async () => {
     const dlmmPool = await dlmmInstance
@@ -296,7 +300,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
               <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
             </div>
-            <SlippagePopover defaultValue={slippage} onChange={setSlippage} />
+            <SlippagePopover defaultValue={slippage.toString()} onChange={value => setSlippage(parseFloat(value))} />
           </div>
         </div>
         <div className="text-muted-foreground mt-1 text-sm">

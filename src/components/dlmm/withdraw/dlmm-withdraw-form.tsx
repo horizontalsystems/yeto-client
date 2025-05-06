@@ -11,7 +11,6 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { ExternalLink, Info } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Pair } from '@/components/dlmm/dlmm'
-import { SlippagePopover } from '@/components/slippage-popover'
 import { DlmmWithdrawBins } from '@/components/dlmm/withdraw/dlmm-withdraw-bins'
 import { BinItem } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
 import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-skeleton'
@@ -30,7 +29,6 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
     submitting: false
   })
 
-  const [slippage, setSlippage] = useState(1)
   const [activeBinId, setActiveBinId] = useState<number>(0)
   const [bins, setBins] = useState<BinItem[]>([])
 
@@ -175,12 +173,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
   return (
     <form className="p-6" onSubmit={handleWithdraw}>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Percentage to withdraw</h2>
-        <SlippagePopover
-          defaultValue={slippage.toString()}
-          onChange={value => setSlippage(parseFloat(value))}
-          title="Slippage"
-        />
+        <h2 className="text-lg font-semibold">Enter amount</h2>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="mb-4 space-y-2">
