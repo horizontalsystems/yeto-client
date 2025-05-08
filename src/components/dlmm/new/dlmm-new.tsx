@@ -17,7 +17,7 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
     loading: !!address
   })
 
-  const fetchPair = useCallback(async (addr: string, retry?: number) => {
+  const fetchPair = useCallback(async (addr: string, retry?: number): Promise<void> => {
     setLiqState({ loading: true })
 
     return fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${addr}`)
@@ -29,7 +29,7 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
       .catch(async err => {
         if (retry && retry <= 3) {
           await sleep(1000)
-          await fetchPair(addr, retry + 1)
+          return fetchPair(addr, retry + 1)
         } else {
           setLiqState({ loading: false, error: err.message })
         }
