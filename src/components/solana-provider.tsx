@@ -14,7 +14,7 @@ import {
   TrustWalletAdapter
 } from '@solana/wallet-adapter-wallets'
 
-import '@solana/wallet-adapter-react-ui/styles.css'
+import '../styles/solana-wallet-connect.css'
 
 export const SolanaProvider = ({ children }: { children: ReactNode }) => {
   const network = WalletAdapterNetwork.Devnet

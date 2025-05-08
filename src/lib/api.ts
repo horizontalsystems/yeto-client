@@ -97,7 +97,7 @@ export async function searchCoins(query: string) {
         address: 'Zsu2MsbxVta1CiTyJod85j9UBrKLMJNvSeZX4HECbDG',
         name: 'M2',
         symbol: 'M2',
-        decimals: 9,
+        decimals: 6,
         logoURI: 'https://statics.solscan.io/solscan-img/solana_icon.svg'
       })
       coinList.unshift({

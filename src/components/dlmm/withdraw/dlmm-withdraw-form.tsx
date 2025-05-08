@@ -1,4 +1,4 @@
-import DLMM, { getBinArraysRequiredByPositionRange, getBinFromBinArray } from '@yeto/dlmm/ts-client'
+import DLMM, { getBinArraysRequiredByPositionRange, getBinFromBinArray, getPriceOfBinByBinId } from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -140,14 +140,19 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
 
     const newBins = []
 
-    for (let i = minBinId.toNumber(); i <= maxBinId.toNumber(); i++) {
-      const bin = getBin(i)
+    for (let binId = minBinId.toNumber(); binId <= maxBinId.toNumber(); binId++) {
+      const bin = getBin(binId)
+      const price = getPriceOfBinByBinId(binId, pool.lbPair.binStep)
+
       const binItem = {
-        liquidity: bin ? bin.liquiditySupply.toString() : '0',
-        amountX: bin ? bin.amountX.toString() : '0',
-        amountY: bin ? bin.amountY.toString() : '0',
-        activeBin: activeBin.binId === i,
-        binId: i
+        liquidity: bin?.liquiditySupply.toString() || '0',
+        activeBin: activeBin.binId === binId,
+        distributionX: 0,
+        distributionY: 0,
+        amountX: (bin?.amountX.toNumber() || 0) / 10_000,
+        amountY: (bin?.amountY.toNumber() || 0) / 10_000,
+        price: pool.fromPricePerLamport(price.toNumber()),
+        binId: binId
       }
       newBins.push(binItem)
     }
@@ -259,6 +264,8 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         bins={bins}
         activeBinId={activeBinId}
         disabled={formState.submitting}
+        xName={pair.mint_x.name}
+        yName={pair.mint_y.name}
       />
 
       <hr className="divider" />

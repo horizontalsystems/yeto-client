@@ -244,17 +244,16 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       const distribution = distributionMap[binId]
       const price = getPriceOfBinByBinId(binId, pool.lbPair.binStep)
 
-      const binItem = {
+      newBins.push({
         liquidity: bin?.liquiditySupply.toString() || '0',
+        activeBin: activeBin.binId === binId,
         distributionX: (amounts.amountX * distribution.xAmount) / 10_000,
         distributionY: (amounts.amountY * distribution.yAmount) / 10_000,
         amountX: (bin?.amountX.toNumber() || 0) / 10_000,
         amountY: (bin?.amountY.toNumber() || 0) / 10_000,
-        activeBin: activeBin.binId === binId,
         price: pool.fromPricePerLamport(price.toNumber()),
         binId: binId
-      }
-      newBins.push(binItem)
+      })
     }
 
     setBins(newBins)

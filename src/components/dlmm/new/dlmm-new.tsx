@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DlmmCreatePool } from '@/components/dlmm/new/dlmm-create-pool'
 import { DlmmAddLiquidity } from '@/components/dlmm/new/dlmm-add-liquidity'
@@ -17,24 +17,32 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
     loading: !!address
   })
 
-  const fetchPair = useCallback(async (addr: string, retry?: number): Promise<void> => {
+  const fetchPair = async (addr: string, retry: number = 3): Promise<void> => {
     setLiqState({ loading: true })
 
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${addr}`)
-      .then(res => res.json())
-      .then(data => {
-        setPair(data)
-        setLiqState({ loading: false })
-      })
-      .catch(async err => {
-        if (retry && retry <= 3) {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/${addr}`)
+      if (!res.ok) {
+        if (retry < 3) {
           await sleep(1000)
-          return fetchPair(addr, retry + 1)
+          return await fetchPair(addr, retry + 1)
         } else {
-          setLiqState({ loading: false, error: err.message })
+          return setLiqState({ loading: false, error: 'Error fetching pair' })
         }
-      })
-  }, [])
+      }
+      const data = await res.json()
+      setPair(data)
+      setLiqState({ loading: false })
+    } catch (err) {
+      console.log(err)
+      if (retry < 3) {
+        await sleep(1000)
+        return await fetchPair(addr, retry + 1)
+      } else {
+        setLiqState({ loading: false, error: 'Unknown error' })
+      }
+    }
+  }
 
   useEffect(() => {
     if (poolAddress) {
@@ -47,7 +55,7 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
       return <DlmmAddLiquiditySkeleton />
     }
 
-    return pair ? (
+    return pair && pair.address ? (
       <DlmmAddLiquidity pair={pair} />
     ) : (
       <div className="mx-auto w-full p-6">
@@ -62,8 +70,9 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
 
   const onClickNext = (address: string) => {
     setPoolAddress(address)
-    fetchPair(address, 1).catch(console.log)
-    setTab('liquidity')
+    fetchPair(address, 1).then(() => {
+      setTab('liquidity')
+    })
   }
 
   return (

@@ -3,11 +3,18 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { BarController, BarElement, CategoryScale, Chart, LinearScale } from 'chart.js'
 import { Slider } from '@/components/ui/slider'
+import { createChartLiquidity } from '@/components/dlmm/new/dlmm-chart-helpers'
 
 Chart.register(BarController, BarElement, LinearScale, CategoryScale)
 
 export type BinItem = {
   liquidity: string
+  activeBin: boolean
+  distributionX: number
+  distributionY: number
+  amountX: number
+  amountY: number
+  price: string
   binId: number
 }
 
@@ -16,6 +23,8 @@ interface DlmmWithdrawBinsProps {
   bins: BinItem[]
   binRangeRef: React.RefObject<number[]>
   disabled: boolean
+  xName: string
+  yName: string
 }
 
 const colors = {
@@ -24,7 +33,7 @@ const colors = {
   tokenY: '#2848FF'
 }
 
-export function DlmmWithdrawBins({ bins, activeBinId, binRangeRef, disabled }: DlmmWithdrawBinsProps) {
+export function DlmmWithdrawBins({ bins, activeBinId, binRangeRef, disabled, xName, yName }: DlmmWithdrawBinsProps) {
   const liquidityCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const liquidityChartRef = useRef<Chart | null>(null)
 
@@ -32,20 +41,26 @@ export function DlmmWithdrawBins({ bins, activeBinId, binRangeRef, disabled }: D
     const ctx = liquidityCanvasRef.current?.getContext('2d')
     if (!ctx) return
     if (!liquidityChartRef.current) {
-      liquidityChartRef.current = createChart(ctx, 0)
+      liquidityChartRef.current = createChartLiquidity(ctx, 0, xName, yName)
     }
 
-    const chart = liquidityChartRef.current
     const [min, max] = binRangeRef.current
-    chart.data.labels = bins.map(bin => bin.binId.toString())
-    chart.data.datasets[0].data = bins.map(bin => parseInt(bin.liquidity))
+    const chart = liquidityChartRef.current
+    chart.data.labels = bins.map(bin => bin.price)
+    chart.data.datasets[0].data = bins.map(bin => {
+      return {
+        x: bin.amountX,
+        y: bin.amountY,
+        value: parseInt(bin.liquidity)
+      }
+    })
     chart.data.datasets[0].backgroundColor = bins.map(bin => {
       if (bin.binId < min && bin.binId < activeBinId) return '#808085'
       if (bin.binId > max && bin.binId > activeBinId) return '#808085'
       return bin.binId === activeBinId ? colors.activeBin : '#4B4B4B'
     })
     chart.update()
-  }, [activeBinId, binRangeRef, bins])
+  }, [activeBinId, binRangeRef, bins, xName, yName])
 
   useEffect(() => {
     drawChart()
@@ -71,40 +86,4 @@ export function DlmmWithdrawBins({ bins, activeBinId, binRangeRef, disabled }: D
       />
     </div>
   )
-}
-
-function createChart(ctx: CanvasRenderingContext2D, radius: number) {
-  return new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [],
-      datasets: [
-        {
-          data: [],
-          backgroundColor: [],
-          borderRadius: radius
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 300
-      },
-      scales: {
-        x: {
-          display: false
-        },
-        y: {
-          display: false
-        }
-      },
-      plugins: {
-        legend: {
-          display: true
-        }
-      }
-    }
-  })
 }

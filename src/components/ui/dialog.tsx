@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useEffect } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 
@@ -8,6 +9,17 @@ import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      if (document.body.style.pointerEvents === 'none') {
+        document.body.style.pointerEvents = 'auto'
+      }
+    })
+
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+
+    return () => observer.disconnect()
+  }, [])
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
