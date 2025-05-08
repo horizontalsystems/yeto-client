@@ -1,14 +1,21 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { BarController, BarElement, CategoryScale, Chart, LinearScale } from 'chart.js'
+import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip } from 'chart.js'
 import { DebouncedState } from 'use-debounce'
 import { Slider } from '@/components/ui/slider'
+import { createChartLiquidity, createChartStrategy } from '@/components/dlmm/new/dlmm-chart-helpers'
 
-Chart.register(BarController, BarElement, LinearScale, CategoryScale)
+Chart.register(BarController, BarElement, LinearScale, CategoryScale, Tooltip)
 
 export type BinItem = {
   liquidity: string
+  activeBin: boolean
+  distributionX: number
+  distributionY: number
+  amountX: number
+  amountY: number
+  price: string
   binId: number
 }
 
@@ -21,6 +28,8 @@ interface AddLiquidityBinsProps {
   binShiftRef: React.RefObject<number>
   binRange: number[]
   disabled: boolean
+  xName: string
+  yName: string
 }
 
 const colors = {
@@ -37,7 +46,9 @@ export function DlmmAddLiquidityBins({
   binShiftRef,
   binRange,
   calculateBinsThrottle,
-  disabled
+  disabled,
+  xName,
+  yName
 }: AddLiquidityBinsProps) {
   const [binsCopy, setBinsCopy] = useState<BinItem[]>([])
 
@@ -56,17 +67,7 @@ export function DlmmAddLiquidityBins({
 
     for (let i = minBinId; i <= maxBinId; i++) {
       const item = existingBins.get(i)
-      if (item) {
-        newBins.push(item)
-      } else {
-        newBins.push({
-          liquidity: '0',
-          amountX: '0',
-          amountY: '0',
-          activeBin: activeBinId === i,
-          binId: i
-        })
-      }
+      if (item) newBins.push(item)
     }
 
     setBinsCopy(newBins)
@@ -81,7 +82,7 @@ export function DlmmAddLiquidityBins({
     const ctx = strategyCanvasRef.current?.getContext('2d')
     if (!ctx) return
     if (!strategyChartRef.current) {
-      strategyChartRef.current = createChart(ctx, 4)
+      strategyChartRef.current = createChartStrategy(ctx, 4, xName, yName)
     }
 
     const minBinId = activeBinId + binRangeRef.current[0] - binShiftRef.current
@@ -89,43 +90,37 @@ export function DlmmAddLiquidityBins({
     const filtered = binsCopy.filter(bin => bin.binId >= minBinId && bin.binId <= maxBinId)
 
     const chart = strategyChartRef.current
-    chart.data.labels = filtered.map(bin => bin.binId.toString())
-    chart.data.datasets[0].data = filtered.map(bin => {
-      let range = 40
-      if (strategy === 'Bid-Ask') {
-        const distance = Math.abs(bin.binId - activeBinId)
-        range = bin.binId === activeBinId ? 1 : distance
-      }
-      return range
-    })
-
-    chart.data.datasets[0].backgroundColor = filtered.map(bin => {
-      if (bin.binId < activeBinId) return colors.tokenX
-      if (bin.binId > activeBinId) return colors.tokenY
-      return colors.activeBin
-    })
+    chart.data.labels = filtered.map(bin => bin.price)
+    chart.data.datasets[0].data = filtered.map(bin => bin.distributionX)
+    chart.data.datasets[1].data = filtered.map(bin => bin.distributionY)
     chart.update()
-  }, [binsCopy, strategy, activeBinId, binRangeRef, binShiftRef])
+  }, [binsCopy, strategy, activeBinId, binRangeRef, binShiftRef, xName, yName])
 
   // Liquidity
   useEffect(() => {
     const ctx = liquidityCanvasRef.current?.getContext('2d')
     if (!ctx) return
     if (!liquidityChartRef.current) {
-      liquidityChartRef.current = createChart(ctx, 0)
+      liquidityChartRef.current = createChartLiquidity(ctx, 0, xName, yName)
     }
 
-    const chart = liquidityChartRef.current
     const [min, max] = binRangeRef.current
-    chart.data.labels = binsCopy.map(bin => bin.binId.toString())
-    chart.data.datasets[0].data = binsCopy.map(bin => parseInt(bin.liquidity))
+    const chart = liquidityChartRef.current
+    chart.data.labels = binsCopy.map(bin => bin.price)
+    chart.data.datasets[0].data = binsCopy.map(bin => {
+      return {
+        x: bin.amountX,
+        y: bin.amountY,
+        value: parseInt(bin.liquidity)
+      }
+    })
     chart.data.datasets[0].backgroundColor = binsCopy.map(bin => {
       if (bin.binId < activeBinId + min && bin.binId < activeBinId) return '#808085'
       if (bin.binId > activeBinId + max && bin.binId > activeBinId) return '#808085'
       return bin.binId === activeBinId ? colors.activeBin : '#4B4B4B'
     })
     chart.update()
-  }, [binsCopy, strategy, activeBinId, binRangeRef])
+  }, [binsCopy, strategy, activeBinId, binRangeRef, xName, yName])
 
   const onShiftBin = (v: number[]) => {
     binShiftRef.current = v[0]
@@ -142,15 +137,15 @@ export function DlmmAddLiquidityBins({
   return (
     <div>
       <div className="my-4">
-        <div className="relative h-20 w-full">
+        <div className="h-20 w-full">
           <canvas ref={strategyCanvasRef} style={{ width: '100%', height: '100%' }} />
         </div>
         <Slider
-          defaultValue={[0]}
+          value={[binShiftRef.current]}
           min={binRangeRef.current[0]}
           max={binRangeRef.current[1]}
           step={1}
-          className="w-full"
+          className="mt-[1px] w-full"
           onValueChange={onShiftBin}
           disabled={binsCopy.length === 0 || disabled}
         />
@@ -160,7 +155,8 @@ export function DlmmAddLiquidityBins({
           <canvas ref={liquidityCanvasRef} style={{ width: '100%', height: '100%' }} />
         </div>
         <Slider
-          defaultValue={binRange}
+          className="mt-[1px]"
+          value={binRangeRef.current}
           min={binRange[0]}
           max={binRange[1]}
           step={1}
@@ -170,40 +166,4 @@ export function DlmmAddLiquidityBins({
       </div>
     </div>
   )
-}
-
-function createChart(ctx: CanvasRenderingContext2D, radius: number) {
-  return new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [],
-      datasets: [
-        {
-          data: [],
-          backgroundColor: [],
-          borderRadius: radius
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 300
-      },
-      scales: {
-        x: {
-          display: false
-        },
-        y: {
-          display: false
-        }
-      },
-      plugins: {
-        legend: {
-          display: true
-        }
-      }
-    }
-  })
 }

@@ -1,6 +1,8 @@
 'use client'
 
 import DLMM, {
+  calculateBidAskDistribution,
+  calculateSpotDistribution,
   getBinArraysRequiredByPositionRange,
   getBinFromBinArray,
   getPriceOfBinByBinId,
@@ -45,7 +47,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const [binRange] = useState([-34, 34])
   const [bins, setBins] = useState<BinItem[]>([])
-  const [activeBinId, setActiveBinId] = useState<number>(0)
+  const [activeBinData, setActiveBinData] = useState<{ id: number; price: string }>({ id: 0, price: '0' })
   const [initializing, setInitializing] = useState(true)
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
@@ -61,9 +63,12 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const binRangeRef = useRef<number[]>(binRange)
   const binShiftRef = useRef<number>(0)
 
-  const [balances, setBalances] = useState<{ valueX?: number; valueY?: number }>({})
-  const baseAmountRef = useRef<HTMLInputElement>(null)
-  const quoteAmountRef = useRef<HTMLInputElement>(null)
+  const [balances, setBalances] = useState<{ balanceX?: number; balanceY?: number }>({})
+  const [amounts, setAmounts] = useState<{ amountX: number; amountY: number }>({
+    amountX: 0,
+    amountY: 0
+  })
+
   const [priceRange, setPriceRange] = useState<MinMaxPrices>({
     minPrice: 0,
     minPriceChange: 0,
@@ -84,14 +89,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       return console.error('Wallet not connected')
     }
 
-    const amountX = parseFloat(baseAmountRef.current?.value || '')
-    if (amountX < 0) {
-      return setErrors({ ...errors, amountX: 'Amount X is required' })
-    }
-
-    const amountY = parseFloat(quoteAmountRef.current?.value || '')
-    if (amountY < 0) {
-      return setErrors({ ...errors, amountY: 'Amount Y is required' })
+    if (amounts.amountX < 0 && amounts.amountY < 0) {
+      return setErrors({ ...errors, amountX: 'Either AmountX or AmountY is required' })
     }
 
     try {
@@ -101,10 +100,10 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
       const { createPositionTx, newBalancePosition } = await createBalancePosition(
         dlmmPool,
-        amountX,
-        amountY,
-        new BN(activeBinId + binRangeRef.current[0] - binShiftRef.current),
-        new BN(activeBinId + binRangeRef.current[1] - binShiftRef.current),
+        amounts.amountX,
+        amounts.amountY,
+        new BN(activeBinData.id + binRangeRef.current[0] - binShiftRef.current),
+        new BN(activeBinData.id + binRangeRef.current[1] - binShiftRef.current),
         walletPubKey,
         Math.round(slippage * 100),
         connection,
@@ -145,7 +144,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const syncBins = useCallback(async () => {
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
-    setActiveBinId(activeBin.binId)
+    setActiveBinData({ id: activeBin.binId, price: activeBin.price })
   }, [dlmmInstance])
 
   const calculatePriceRange = useCallback(
@@ -166,18 +165,6 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     [dlmmInstance]
   )
 
-  const syncBalance = useCallback(async () => {
-    const dlmmPool = await dlmmInstance
-    if (!walletPubKey) {
-      return
-    }
-
-    setBalances({
-      valueX: await getBalance(connection, walletPubKey, dlmmPool.tokenX.publicKey),
-      valueY: await getBalance(connection, walletPubKey, dlmmPool.tokenY.publicKey)
-    })
-  }, [connection, dlmmInstance, walletPubKey])
-
   const calculateBins = useCallback(async () => {
     const pool = await dlmmInstance
     const activeBin = await pool.getActiveBin()
@@ -192,8 +179,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       pool.program.programId
     )
 
-    const publicKeys = binArraysRequired.map(i => i.key)
-    const binArrays = await pool.program.account.binArray.fetchMultiple(publicKeys)
+    const binArrays = await pool.program.account.binArray.fetchMultiple(binArraysRequired.map(i => i.key))
 
     const getBin = (binId: number) => {
       const binArrayIdx = binIdToBinArrayIndex(new BN(binId))
@@ -204,86 +190,177 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       return binArray ? getBinFromBinArray(binId, binArray) : null
     }
 
+    const isSingleSided = (amounts.amountX > 0 && amounts.amountY <= 0) || (amounts.amountY > 0 && amounts.amountX <= 0)
+    const range = Array.from(
+      { length: Math.abs(maxBinId.toNumber() - minBinId.toNumber() + 1) },
+      (_, i) => minBinId.toNumber() + i
+    ).filter(item => {
+      if (isSingleSided) {
+        return activeBin.binId !== item
+      }
+      return true
+    })
+
+    const smallest = Math.min(...range)
+    const mixedRange = minBinId < 0 && maxBinId > 0
+
+    let distributionRange = range
+    let distributionBinId = activeBin.binId
+    if (mixedRange) {
+      distributionRange = range.map(item => item + Math.abs(smallest))
+      distributionBinId = distributionBinId + Math.abs(smallest)
+    }
+
+    const distributionMap: { [key: number]: { xAmount: number; yAmount: number } } = {}
+    let distributions =
+      strategy === 'Spot'
+        ? calculateSpotDistribution(distributionBinId, distributionRange)
+        : calculateBidAskDistribution(distributionBinId, distributionRange)
+
+    if (mixedRange) {
+      distributions = distributions.map(item => {
+        return {
+          ...item,
+          binId: item.binId - Math.abs(smallest)
+        }
+      })
+    }
+
+    for (let i = 0; i < distributions.length; i++) {
+      const distribution = distributions[i]
+      distributionMap[distribution.binId] = {
+        xAmount: distribution.xAmountBpsOfTotal.toNumber(),
+        yAmount: distribution.yAmountBpsOfTotal.toNumber()
+      }
+    }
+
     const newBins = []
-    for (let i = minBinId.toNumber(); i <= maxBinId.toNumber(); i++) {
-      const bin = getBin(i)
+    for (let binId = minBinId.toNumber(); binId <= maxBinId.toNumber(); binId++) {
+      if (isSingleSided && activeBin.binId === binId) {
+        continue
+      }
+
+      const bin = getBin(binId)
+      const distribution = distributionMap[binId]
+      const price = getPriceOfBinByBinId(binId, pool.lbPair.binStep)
+
       const binItem = {
-        liquidity: bin ? bin.liquiditySupply.toString() : '0',
-        amountX: bin ? bin.amountX.toString() : '0',
-        amountY: bin ? bin.amountY.toString() : '0',
-        activeBin: activeBin.binId === i,
-        binId: i
+        liquidity: bin?.liquiditySupply.toString() || '0',
+        distributionX: (amounts.amountX * distribution.xAmount) / 10_000,
+        distributionY: (amounts.amountY * distribution.yAmount) / 10_000,
+        amountX: (bin?.amountX.toNumber() || 0) / 10_000,
+        amountY: (bin?.amountY.toNumber() || 0) / 10_000,
+        activeBin: activeBin.binId === binId,
+        price: pool.fromPricePerLamport(price.toNumber()),
+        binId: binId
       }
       newBins.push(binItem)
     }
 
     setBins(newBins)
     calculatePriceRange(minBinId.toNumber(), maxBinId.toNumber(), activeBin.price, pool.lbPair.binStep)
-  }, [pair.address, binRange, calculatePriceRange, dlmmInstance])
+  }, [dlmmInstance, binRange, pair.address, strategy, calculatePriceRange, amounts.amountX, amounts.amountY])
 
   const calculateBinsThrottle = useDebouncedCallback(calculateBins, 200)
+
+  const syncBalance = async () => {
+    if (!walletPubKey) return
+
+    try {
+      const dlmmPool = await dlmmInstance
+      setBalances({
+        balanceX: await getBalance(connection, walletPubKey, dlmmPool.tokenX.publicKey),
+        balanceY: await getBalance(connection, walletPubKey, dlmmPool.tokenY.publicKey)
+      })
+    } catch (e) {
+      console.log(e)
+    }
+  }
 
   useEffect(() => {
     setInitializing(true)
     syncBins()
       .then(calculateBins)
-      .then(syncBalance)
       .finally(() => {
         setInitializing(false)
       })
-  }, [pair.address, calculateBins, syncBalance, syncBins])
+  }, [pair.address])
+
+  useEffect(() => {
+    syncBalance()
+  }, [walletPubKey])
+
+  const autoShift = (amountX: number, amountY: number) => {
+    if (amountX > 0 && amountY === 0) {
+      binShiftRef.current = binRangeRef.current[0]
+    } else if (amountY > 0 && amountX === 0) {
+      binShiftRef.current = binRangeRef.current[1]
+    } else {
+      binShiftRef.current = 0
+    }
+  }
 
   const onChangeBaseAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountX']) })
 
-    const value = parseFloat(amount) || 0
-    const pool = await dlmmInstance
-    const activeBin = await pool.getActiveBin()
-    if (autoFill && quoteAmountRef.current) {
-      quoteAmountRef.current.value = toRounded(
-        parseFloat(pool.fromPricePerLamport(Number(activeBin.price))) * value
-      ).toString()
+    const amountX = parseFloat(amount) || 0
+    let amountY = amounts.amountY
+    if (autoFill) {
+      const pool = await dlmmInstance
+      amountY = toRounded(parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))) * amountX)
     }
+
+    autoShift(amountX, amountY)
+    setAmounts({ amountX, amountY })
+    await calculateBinsThrottle()
   }
 
-  const onMaxBaseAmount = () => {
-    if (balances.valueX !== undefined && baseAmountRef.current) {
-      baseAmountRef.current.value = balances.valueX.toString()
-      onChangeBaseAmount(baseAmountRef.current.value)
+  const onMaxBaseAmount = async () => {
+    if (balances.balanceX !== undefined) {
+      await onChangeBaseAmount(balances.balanceX.toString())
     }
   }
 
   const onChangeQuoteAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountY']) })
 
-    const value = parseFloat(amount) || 0
-    const pool = await dlmmInstance
-    const activeBin = await pool.getActiveBin()
-    if (autoFill && baseAmountRef.current) {
-      baseAmountRef.current.value = toRounded(
-        value / parseFloat(pool.fromPricePerLamport(Number(activeBin.price)))
-      ).toString()
+    const amountY = parseFloat(amount) || 0
+    let amountX = amounts.amountX
+    if (autoFill) {
+      const pool = await dlmmInstance
+      amountX = toRounded(amountY / parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))))
+    }
+
+    autoShift(amountX, amountY)
+    setAmounts({ amountX, amountY })
+    await calculateBinsThrottle()
+  }
+
+  const onMaxQuoteAmount = async () => {
+    if (balances.balanceY !== undefined) {
+      await onChangeQuoteAmount(balances.balanceY.toString())
     }
   }
 
-  const onMaxQuoteAmount = () => {
-    if (balances.valueY !== undefined && quoteAmountRef.current) {
-      quoteAmountRef.current.value = balances.valueY.toString()
-      onChangeQuoteAmount(quoteAmountRef.current.value)
-    }
-  }
-
-  const onChangeAutoFill = (checked: boolean) => {
+  const onChangeAutoFill = async (checked: boolean) => {
     setAutoFill(checked)
-    if (balances.valueX === undefined || balances.valueY === undefined || !baseAmountRef.current) {
+    if (balances.balanceX === undefined || balances.balanceY === undefined) {
       return
     }
 
     if (checked) {
-      const newAmount = toRounded(percentage(autoFillRef.current, balances.valueX)).toString()
-      baseAmountRef.current.value = newAmount
-      onChangeBaseAmount(newAmount)
+      await onChangeBaseAmount(toRounded(percentage(autoFillRef.current, balances.balanceX)).toString())
     }
+  }
+
+  const onReset = async () => {
+    binShiftRef.current = 0
+    await calculateBinsThrottle()
+  }
+
+  const onChangeStrategy = async (strategy: string) => {
+    setStrategy(strategy)
+    await calculateBinsThrottle()
   }
 
   if (initializing) {
@@ -316,8 +393,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <span className="ms-2">{pair.mint_x.name}</span>
             </div>
             <Input
-              ref={baseAmountRef}
-              type="text"
+              value={amounts.amountX}
+              type="number"
+              step="0.01"
               placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
               onChange={v => onChangeBaseAmount(v.target.value)}
@@ -326,7 +404,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <div className="mt-1 flex justify-between">
               <div className="text-gray flex items-center text-sm">
                 <span className="me-1">Balance</span>
-                {balances.valueX === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.valueX}
+                {balances.balanceX === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceX}
               </div>
               <Button
                 type="button"
@@ -349,8 +427,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <span className="ms-2">{pair.mint_y.name}</span>
             </div>
             <Input
-              ref={quoteAmountRef}
-              type="text"
+              value={amounts.amountY}
+              type="number"
+              step="0.01"
               placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
               onChange={v => onChangeQuoteAmount(v.target.value)}
@@ -359,7 +438,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <div className="mt-1 flex justify-between">
               <div className="text-gray flex items-center text-sm">
                 <span className="me-1">Balance</span>
-                {balances.valueY === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.valueY}
+                {balances.balanceY === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceY}
               </div>
               <Button
                 type="button"
@@ -379,10 +458,10 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         <div className="flex items-center justify-between">
           <div className="">Set Price Range</div>
           <div className="flex justify-between gap-2">
-            <Button variant="outline" size="sm" type="button">
+            <Button className="cursor-pointer" variant="outline" size="sm" type="button" onClick={onReset}>
               Reset
             </Button>
-            <Select defaultValue={strategy} onValueChange={setStrategy} disabled={formState.submitting}>
+            <Select defaultValue={strategy} onValueChange={onChangeStrategy} disabled={formState.submitting}>
               <SelectTrigger className="h-8 w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -412,9 +491,11 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
           binShiftRef={binShiftRef}
           bins={bins}
           strategy={strategy}
-          activeBinId={activeBinId}
+          activeBinId={activeBinData.id}
           calculateBinsThrottle={calculateBinsThrottle}
           disabled={formState.submitting}
+          xName={pair.mint_x.name}
+          yName={pair.mint_y.name}
         />
       </div>
       <div className="mb-6 flex gap-2">
