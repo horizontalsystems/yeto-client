@@ -7,7 +7,7 @@ import { getPools } from '@/lib/api'
 export default async function Home() {
   const queryClient = getQueryClient()
   await queryClient.prefetchQuery({
-    queryKey: ['pools', ''],
+    queryKey: ['pools', '', 0],
     queryFn: () => getPools('')
   })
 

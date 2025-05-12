@@ -6,8 +6,8 @@ export type ApiCoinItem = {
   logoURI: string
 }
 
-export async function getPools(query: string) {
-  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=0&limit=100&sort_key=liquidity&order_by=desc`
+export async function getPools(query: string, page = 0, limit = 20) {
+  let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=${page}&limit=${limit}&sort_key=liquidity&order_by=desc`
   if (query.length) {
     apiUrl += `&q=${encodeURIComponent(query)}`
   }

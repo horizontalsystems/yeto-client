@@ -19,13 +19,16 @@ export type Pool = {
 
 export function DlmmList() {
   const [searchText, setSearchText] = useState('')
+  const [page, setPage] = useState(0)
+  const limit = 20
 
   const { data, isLoading, isFetching, isError } = useQuery({
-    queryKey: ['pools', searchText],
-    queryFn: () => getPools(searchText)
+    queryKey: ['pools', searchText, page],
+    queryFn: () => getPools(searchText, page, limit)
   })
 
   const onHandleSearch = useDebouncedCallback((value: string) => {
+    setPage(0)
     setSearchText(value)
   }, 300)
 
@@ -33,6 +36,8 @@ export function DlmmList() {
   if (isLoading && !searchText.length) {
     return <DlmmListSkeleton withSearchInput />
   }
+
+  const hasNextPage = data.length === limit
 
   return (
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
@@ -48,32 +53,45 @@ export function DlmmList() {
       {isFetching ? (
         <DlmmListSkeleton withSearchInput={false} />
       ) : (
-        <div className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-          {/* Column titles - desktop only */}
-          <div className="text-gray bg-card hidden md:flex w-full border-t text-xs">
-            <div className="w-[40%] px-6 py-3 font-medium">Pool</div>
-            <div className="w-[20%] px-6 py-3 font-medium">TVL</div>
-            <div className="w-[20%] px-6 py-3 font-medium">24h Vol</div>
-            <div className="w-[20%] px-6 py-3 font-medium">APR</div>
+        <>
+          <div className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-gray bg-card hidden w-full border-t text-xs md:flex">
+              <div className="w-[40%] px-6 py-3 font-medium">Pool</div>
+              <div className="w-[20%] px-6 py-3 font-medium">TVL</div>
+              <div className="w-[20%] px-6 py-3 font-medium">24h Vol</div>
+              <div className="w-[20%] px-6 py-3 font-medium">APR</div>
+            </div>
+            {data.map((pool: Pool, index: number) => {
+              let tvl = 0
+              let volume = 0
+              let apr = 0
+              const pairs: Pair[] = []
+
+              pool.pairs.forEach(pair => {
+                tvl += parseFloat(pair.liquidity) || 0
+                volume += parseFloat(pair.volume['hour_24']) || 0
+                apr += parseFloat(pair.apr) || 0
+                pairs.push(pair)
+              })
+
+              return <DlmmListItem key={index} name={pool.name} tvl={tvl} volume={volume} apr={apr} pairs={pairs} />
+            })}
           </div>
-          {data.map((pool: Pool, index: number) => {
-            let tvl = 0
-            let volume = 0
-            let apr = 0 // max apr
 
-            const pairs: Pair[] = []
-
-            for (let i = 0; i < pool.pairs.length; i += 1) {
-              const pair = pool.pairs[i]
-              tvl += parseFloat(pair.liquidity) || 0
-              volume += parseFloat(pair.volume['hour_24']) || 0
-              apr += parseFloat(pair.apr) || 0
-              pairs.push(pair)
-            }
-
-            return <DlmmListItem key={index} name={pool.name} tvl={tvl} volume={volume} apr={apr} pairs={pairs} />
-          })}
-        </div>
+          <div className="bg-card flex items-center justify-between border-t p-4">
+            <Button onClick={() => setPage(prev => Math.max(prev - 1, 0))} disabled={page === 0} variant="outline">
+              Previous
+            </Button>
+            <span>Page {page + 1}</span>
+            <Button
+              onClick={() => setPage(prev => (hasNextPage ? prev + 1 : prev))}
+              disabled={!hasNextPage}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </div>
+        </>
       )}
     </div>
   )
