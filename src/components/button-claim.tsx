@@ -2,11 +2,11 @@
 
 import DLMM from '@yeto/dlmm/ts-client'
 import { useMemo, useState } from 'react'
-import { ExternalLink } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: string; positionAddress: string }) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
@@ -39,29 +39,23 @@ export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: str
         return toast.success('No fee to claim', { duration: 5000 })
       }
 
-      const signature = await sendTransaction(claimFeeTx, connection)
-
-      toast.success('Claim fee complete', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
-
-      setFormState({ submitting: false })
+      sendTransaction(claimFeeTx, connection)
+        .then(signature => {
+          setFormState({ submitting: false })
+          toast.success('Claim fee complete', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false, error: e.message })
+          toast.error('Claim fee failed', { description: e.message })
+        })
     } catch (e) {
-      let error = 'Failed to claim fee'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
-      setFormState({ submitting: false, error })
-      toast.error('Claim fee failed', { description: error })
+      console.log(e)
+      setFormState({ submitting: false })
+      toast.error('Claim fee failed')
     }
   }
 

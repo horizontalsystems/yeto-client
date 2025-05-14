@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { formatPrice, formatUsd, toPercent, truncate } from '@/lib/utils'
+import { formatRawValue, formatPrice, formatUsd, toPercent, truncate } from '@/lib/utils'
 import { DlmmSkeleton } from '@/components/dlmm/dlmm-skeleton'
 import { PriceChart } from '@/components/chart/price-chart'
 import { TradingVolumeChart } from '@/components/chart/trading-volume-chart'
@@ -148,7 +148,7 @@ export function Dlmm({ address }: { address: string }) {
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">Allocation {pair.mint_x.name}</span>
                 <span className="text-foreground font-semibold">
-                  {formatPrice(new Decimal(pair.reserve_x_amount).div(10 ** pair.mint_x.decimals || 0))}
+                  {formatPrice(formatRawValue(pair.reserve_x_amount, pair.mint_x.decimals))}
                 </span>
               </div>
               <div className="border-t py-2">
@@ -166,7 +166,7 @@ export function Dlmm({ address }: { address: string }) {
               <div className="flex flex-col border-t py-2">
                 <span className="text-muted-foreground text-sm">Allocation {pair.mint_y.name}</span>
                 <span className="text-foreground font-semibold">
-                  {formatPrice(new Decimal(pair.reserve_y_amount).div(10 ** pair.mint_y.decimals || 0))}
+                  {formatPrice(formatRawValue(pair.reserve_y_amount, pair.mint_y.decimals))}
                 </span>
               </div>
               <div className="border-t py-2">

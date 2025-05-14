@@ -1,4 +1,8 @@
-import DLMM, { getBinArraysRequiredByPositionRange, getBinFromBinArray, getPriceOfBinByBinId } from '@yeto/dlmm/ts-client'
+import DLMM, {
+  getBinArraysRequiredByPositionRange,
+  getBinFromBinArray,
+  getPriceOfBinByBinId
+} from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,13 +12,14 @@ import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { ExternalLink, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { Pair } from '@/components/dlmm/dlmm'
 import { DlmmWithdrawBins } from '@/components/dlmm/withdraw/dlmm-withdraw-bins'
 import { BinItem } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
 import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-skeleton'
 import { binIdToBinArrayIndex } from '@/lib/pool-utils'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -81,29 +86,23 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         withdrawTx = withdrawTx[0]
       }
 
-      const signature = await sendTransaction(withdrawTx, connection)
-
-      setFormState({ submitting: false })
-
-      toast.success('Withdraw complete', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
+      sendTransaction(withdrawTx, connection)
+        .then(signature => {
+          setFormState({ submitting: false })
+          toast.success('Withdraw complete', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false, error: e.message })
+          toast.error('Withdraw failed', { description: e.message })
+        })
     } catch (e) {
-      let error = 'Failed to withdraw'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
-      setFormState({ submitting: false, error })
-      toast.error('Withdraw failed', { description: error })
+      console.log(e)
+      setFormState({ submitting: false })
+      toast.error('Withdraw failed')
     }
   }
 

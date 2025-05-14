@@ -2,7 +2,7 @@
 
 import DLMM, { deriveLbPair2 } from '@yeto/dlmm/ts-client'
 import { SyntheticEvent, useState } from 'react'
-import { ExternalLink, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SelectNumber } from '@/components/select-number'
@@ -17,6 +17,7 @@ import { omit } from 'es-toolkit/compat'
 import { ButtonConnect } from '@/components/button-connect'
 import { toast } from 'sonner'
 import { baseFeePercentages, binStepsByBaseFee, derivePresetParameter } from '@/lib/pool-utils'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
@@ -76,7 +77,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       }
 
       const presetParamAddress = derivePresetParameter(programId, binStep, baseFactor)
-      const pricePerLamport = DLMM.getPricePerLamport(base.decimals, quote.decimals, initialPrice);
+      const pricePerLamport = DLMM.getPricePerLamport(base.decimals, quote.decimals, initialPrice)
       const binIdFromPrice = DLMM.getBinIdFromPrice(pricePerLamport, binStep, true)
       const rawTx = await DLMM.createLbPair(
         connection,
@@ -89,33 +90,27 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         new BN(binIdFromPrice)
       )
 
-      const signature = await sendTransaction(rawTx, connection)
-      setFormState({ submitting: false, newPoolAddress: poolAddress.toBase58() })
+      sendTransaction(rawTx, connection)
+        .then(signature => {
+          setFormState({ submitting: false, newPoolAddress: poolAddress.toBase58() })
+          onCreate(poolAddress.toBase58())
 
-      onCreate(poolAddress.toBase58())
-
-      toast.success('Pool created', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
+          toast.success('Pool created', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false })
+          toast.error('Failed to create pool', {
+            description: e.message
+          })
+        })
     } catch (e) {
       console.log(e)
-      let error = 'Failed to create pool'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
       setFormState({ submitting: false })
-      toast.error('Failed to create pool', {
-        description: error
-      })
+      toast.error('Failed to create pool')
     }
   }
 

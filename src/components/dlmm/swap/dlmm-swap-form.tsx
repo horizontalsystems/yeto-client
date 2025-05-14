@@ -6,7 +6,7 @@ import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { ArrowDownUp, ExternalLink } from 'lucide-react'
+import { ArrowDownUp } from 'lucide-react'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { toast } from 'sonner'
 import { getBalance } from '@/lib/pool-utils'
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrice, percentage } from '@/lib/utils'
 import { SlippagePopover } from '@/components/slippage-popover'
 import { Pair } from '@/components/dlmm/dlmm'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 interface DlmmSwapFormProps {
   pair: Pair
@@ -93,26 +94,23 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         outToken
       })
 
-      const signature = await sendTransaction(swapTx, connection)
-
-      setFormState({ submitting: false })
-
-      toast.success('Swap complete', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
+      sendTransaction(swapTx, connection)
+        .then(signature => {
+          setFormState({ submitting: false })
+          toast.success('Swap complete', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false, error: e.message })
+          toast.error('Swap failed', { description: e.message })
+        })
     } catch (e) {
-      let error = 'Failed to swap'
-      if (e instanceof Error) error = e.message
-      setFormState({ submitting: false, error })
-      toast.error('Swap failed', { description: error })
+      console.log(e)
+      setFormState({ submitting: false })
+      toast.error('Swap failed')
     }
   }
 

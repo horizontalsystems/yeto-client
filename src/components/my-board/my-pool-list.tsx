@@ -11,7 +11,7 @@ import { getPoolsByAddress } from '@/lib/api'
 import { Pair } from '@/components/dlmm/dlmm'
 import { BN } from '@coral-xyz/anchor'
 import { toast } from 'sonner'
-import { ExternalLink } from 'lucide-react'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 type MyPair = {
   pair: Pair
@@ -53,29 +53,23 @@ export function MyPoolList({ poolAddress }: { poolAddress?: string }) {
         withdrawTx = withdrawTx[0]
       }
 
-      const signature = await sendTransaction(withdrawTx, connection)
-
-      setFormState({ submitting: false })
-
-      toast.success('Position closed', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
+      sendTransaction(withdrawTx, connection)
+        .then(signature => {
+          setFormState({ submitting: false })
+          toast.success('Position closed', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false })
+          toast.error('Failed to close position', { description: e.message })
+        })
     } catch (e) {
-      let error = 'Failed to close position'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
-      setFormState({ submitting: false, error })
-      toast.error('Failed to close position˚', { description: error })
+      console.log(e)
+      setFormState({ submitting: false })
+      toast.error('Failed to close position')
     }
   }
 
@@ -94,7 +88,7 @@ export function MyPoolList({ poolAddress }: { poolAddress?: string }) {
 
       for (const [address, info] of entries) {
         const pair = pools[address]
-        if (!pair || poolAddress && poolAddress !== address) {
+        if (!pair || (poolAddress && poolAddress !== address)) {
           continue
         }
 

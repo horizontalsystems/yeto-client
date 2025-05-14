@@ -77,6 +77,10 @@ export function formatPrice(value: number | string | Decimal, decimals: number =
   })
 }
 
+export function formatRawValue(value: string, decimals: number = 0) {
+  return new Decimal(value.length ? value : 0).div(10 ** decimals)
+}
+
 export function formatUsd(value: number | string | Decimal, decimals: number = 6): string {
   return '$' + formatNumber(value || 0, decimals, { minimumFractionDigits: Math.min(decimals, 2) })
 }

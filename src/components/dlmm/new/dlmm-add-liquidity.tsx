@@ -12,7 +12,6 @@ import { toast } from 'sonner'
 import { omit } from 'es-toolkit/compat'
 import { useDebouncedCallback } from 'use-debounce'
 import { BN } from '@coral-xyz/anchor'
-import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +29,7 @@ import { BinItem, DlmmAddLiquidityBins } from '@/components/dlmm/new/dlmm-add-li
 import { cn, formatPrice, percentage, percentageChange, toRounded } from '@/lib/utils'
 import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
+import { linkToSolscan } from '@/lib/ui-utils'
 
 export interface AddLiquidityProps {
   pair: Pair
@@ -110,34 +110,25 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         strategy === 'Spot' ? StrategyType.SpotImBalanced : StrategyType.BidAskImBalanced
       )
 
-      const signature = await sendTransaction(createPositionTx, connection, {
-        signers: [newBalancePosition]
-      })
-
-      setFormState({ submitting: false })
-
-      toast.success('Liquidity added', {
-        duration: 5000,
-        description: (
-          <div className="flex flex-row items-center">
-            <span>Solscan :</span>
-            <a className="text-blue-400" target="_blank" href={`https://solscan.io/tx/${signature}`}>
-              <ExternalLink size="18" />
-            </a>
-          </div>
-        )
-      })
+      sendTransaction(createPositionTx, connection, { signers: [newBalancePosition] })
+        .then(signature => {
+          setFormState({ submitting: false })
+          toast.success('Liquidity added', {
+            duration: 5000,
+            description: linkToSolscan(signature)
+          })
+        })
+        .catch(e => {
+          console.error(e)
+          setFormState({ submitting: false, error: e.message })
+          toast.error('Failed to add liquidity', {
+            description: e.message
+          })
+        })
     } catch (e) {
-      let error = 'Failed to add liquidity'
-      if (e instanceof Error) {
-        error = e.message
-      }
-
-      setFormState({ submitting: false, error })
-
-      toast.error('Failed to add liquidity', {
-        description: error
-      })
+      console.log(e)
+      setFormState({ submitting: false })
+      toast.error('Failed to add liquidity')
     }
   }
 
