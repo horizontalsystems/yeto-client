@@ -96,13 +96,27 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       setFormState({ submitting: true })
 
       const dlmmPool = await dlmmInstance
+      const activeBin = await dlmmPool.getActiveBin()
+      const isSingleSided = (amountX > 0 && amountY <= 0) || (amountY > 0 && amountX <= 0)
+
+      let minBinId = activeBin.binId + binRangeRef.current[0] - binShiftRef.current
+      let maxBinId = activeBin.binId + binRangeRef.current[1] - binShiftRef.current
+
+      if (isSingleSided) {
+        if (minBinId === activeBin.binId) {
+          minBinId += 1
+        }
+        if (maxBinId === activeBin.binId) {
+          maxBinId -= 1
+        }
+      }
 
       const { createPositionTx, newBalancePosition } = await createBalancePosition(
         dlmmPool,
         amountX,
         amountY,
-        new BN(activeBinData.id + binRangeRef.current[0] - binShiftRef.current),
-        new BN(activeBinData.id + binRangeRef.current[1] - binShiftRef.current),
+        new BN(minBinId),
+        new BN(maxBinId),
         walletPubKey,
         Math.round(slippage * 100),
         connection,
