@@ -64,10 +64,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const binShiftRef = useRef<number>(0)
 
   const [balances, setBalances] = useState<{ balanceX?: number; balanceY?: number }>({})
-  const [amounts, setAmounts] = useState<{ amountX: number; amountY: number }>({
-    amountX: 0,
-    amountY: 0
-  })
+  const [amounts, setAmounts] = useState<{ amountX?: number; amountY?: number }>({})
 
   const [priceRange, setPriceRange] = useState<MinMaxPrices>({
     minPrice: 0,
@@ -89,7 +86,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       return console.error('Wallet not connected')
     }
 
-    if (amounts.amountX < 0 && amounts.amountY < 0) {
+    const amountX = amounts.amountX || 0
+    const amountY = amounts.amountY || 0
+    if (amountX < 0 && amountY < 0) {
       return setErrors({ ...errors, amountX: 'Either AmountX or AmountY is required' })
     }
 
@@ -100,8 +99,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
       const { createPositionTx, newBalancePosition } = await createBalancePosition(
         dlmmPool,
-        amounts.amountX,
-        amounts.amountY,
+        amountX,
+        amountY,
         new BN(activeBinData.id + binRangeRef.current[0] - binShiftRef.current),
         new BN(activeBinData.id + binRangeRef.current[1] - binShiftRef.current),
         walletPubKey,
@@ -181,7 +180,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       return binArray ? getBinFromBinArray(binId, binArray) : null
     }
 
-    const isSingleSided = (amounts.amountX > 0 && amounts.amountY <= 0) || (amounts.amountY > 0 && amounts.amountX <= 0)
+    const amountX = amounts.amountX || 0
+    const amountY = amounts.amountY || 0
+    const isSingleSided = (amountX > 0 && amountY <= 0) || (amountY > 0 && amountX <= 0)
     const range = Array.from(
       { length: Math.abs(maxBinId.toNumber() - minBinId.toNumber() + 1) },
       (_, i) => minBinId.toNumber() + i
@@ -238,8 +239,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
       newBins.push({
         liquidity: bin?.liquiditySupply.toString() || '0',
         activeBin: activeBin.binId === binId,
-        distributionX: (amounts.amountX * distribution.xAmount) / 10_000,
-        distributionY: (amounts.amountY * distribution.yAmount) / 10_000,
+        distributionX: (amountX * distribution.xAmount) / 10_000,
+        distributionY: (amountY * distribution.yAmount) / 10_000,
         amountX: (bin?.amountX.toNumber() || 0) / 10_000,
         amountY: (bin?.amountY.toNumber() || 0) / 10_000,
         price: pool.fromPricePerLamport(price.toNumber()),
@@ -280,7 +281,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     syncBalance()
   }, [walletPubKey])
 
-  const autoShift = (amountX: number, amountY: number) => {
+  const autoShift = (amountX: number = 0, amountY: number = 0) => {
     if (amountX > 0 && amountY === 0) {
       binShiftRef.current = binRangeRef.current[0]
     } else if (amountY > 0 && amountX === 0) {
@@ -293,9 +294,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const onChangeBaseAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountX']) })
 
-    const amountX = parseFloat(amount) || 0
+    const amountX = parseFloat(amount) || undefined
     let amountY = amounts.amountY
-    if (autoFill) {
+    if (autoFill && amountX) {
       const pool = await dlmmInstance
       amountY = toRounded(parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))) * amountX)
     }
@@ -314,9 +315,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   const onChangeQuoteAmount = async (amount: string) => {
     setErrors({ ...omit(errors, ['amountY']) })
 
-    const amountY = parseFloat(amount) || 0
+    const amountY = parseFloat(amount) || undefined
     let amountX = amounts.amountX
-    if (autoFill) {
+    if (autoFill && amountY) {
       const pool = await dlmmInstance
       amountX = toRounded(amountY / parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))))
     }
