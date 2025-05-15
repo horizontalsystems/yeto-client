@@ -106,9 +106,10 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
           toast.error('Swap failed', { description: e.message })
         })
     } catch (e) {
-      console.log(e)
-      setFormState({ submitting: false })
-      toast.error('Swap failed')
+      let error = 'Failed to swap'
+      if (e instanceof Error) error = e.message
+      setFormState({ submitting: false, error })
+      toast.error('Swap failed', { description: error })
     }
   }
 

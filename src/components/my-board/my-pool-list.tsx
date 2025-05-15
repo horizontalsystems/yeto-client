@@ -68,8 +68,11 @@ export function MyPoolList({ poolAddress }: { poolAddress?: string }) {
         })
     } catch (e) {
       console.log(e)
-      setFormState({ submitting: false })
-      toast.error('Failed to close position')
+
+      let error = 'Failed to close position'
+      if (e instanceof Error) error = e.message
+      setFormState({ submitting: false, error })
+      toast.error('Failed to close position˚', { description: error })
     }
   }
 

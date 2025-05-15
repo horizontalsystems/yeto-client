@@ -101,8 +101,10 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         })
     } catch (e) {
       console.log(e)
-      setFormState({ submitting: false })
-      toast.error('Withdraw failed')
+      let error = 'Failed to withdraw'
+      if (e instanceof Error) error = e.message
+      setFormState({ submitting: false, error })
+      toast.error('Withdraw failed', { description: error })
     }
   }
 

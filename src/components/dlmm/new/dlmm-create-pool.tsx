@@ -109,8 +109,10 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         })
     } catch (e) {
       console.log(e)
+      let error = 'Failed to create pool'
+      if (e instanceof Error) error = e.message
       setFormState({ submitting: false })
-      toast.error('Failed to create pool')
+      toast.error('Failed to create pool', { description: error })
     }
   }
 

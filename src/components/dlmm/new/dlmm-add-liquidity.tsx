@@ -141,8 +141,10 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         })
     } catch (e) {
       console.log(e)
-      setFormState({ submitting: false })
-      toast.error('Failed to add liquidity')
+      let error = 'Failed to add liquidity'
+      if (e instanceof Error) error = e.message
+      setFormState({ submitting: false, error })
+      toast.error('Failed to add liquidity', { description: error })
     }
   }
 
