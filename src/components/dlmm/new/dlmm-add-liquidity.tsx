@@ -14,6 +14,7 @@ import { useDebouncedCallback } from 'use-debounce'
 import { BN } from '@coral-xyz/anchor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputNumeric } from '@/components/ui/input-numeric'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -305,10 +306,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     }
   }
 
-  const onChangeBaseAmount = async (amount: string) => {
+  const onChangeBaseAmount = async (amountX: number | undefined) => {
     setErrors({ ...omit(errors, ['amountX']) })
 
-    const amountX = parseFloat(amount) || undefined
     let amountY = amounts.amountY
     if (autoFill && amountX) {
       const pool = await dlmmInstance
@@ -322,14 +322,13 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const onMaxBaseAmount = async () => {
     if (balances.balanceX !== undefined) {
-      await onChangeBaseAmount(balances.balanceX.toString())
+      await onChangeBaseAmount(balances.balanceX)
     }
   }
 
-  const onChangeQuoteAmount = async (amount: string) => {
+  const onChangeQuoteAmount = async (amountY: number | undefined) => {
     setErrors({ ...omit(errors, ['amountY']) })
 
-    const amountY = parseFloat(amount) || undefined
     let amountX = amounts.amountX
     if (autoFill && amountY) {
       const pool = await dlmmInstance
@@ -343,7 +342,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const onMaxQuoteAmount = async () => {
     if (balances.balanceY !== undefined) {
-      await onChangeQuoteAmount(balances.balanceY.toString())
+      await onChangeQuoteAmount(balances.balanceY)
     }
   }
 
@@ -354,7 +353,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     }
 
     if (checked) {
-      await onChangeBaseAmount(toRounded(percentage(autoFillRef.current, balances.balanceX)).toString())
+      await onChangeBaseAmount(toRounded(percentage(autoFillRef.current, balances.balanceX)))
     }
   }
 
@@ -397,13 +396,10 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <img src={pair.mint_x.logo_url} alt="" width="24" height="24" />
               <span className="ms-2">{pair.mint_x.name}</span>
             </div>
-            <Input
+            <InputNumeric
               value={amounts.amountX}
-              type="number"
-              step="0.01"
-              placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
-              onChange={v => onChangeBaseAmount(v.target.value)}
+              onChangeValue={onChangeBaseAmount}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
@@ -431,13 +427,10 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
               <img src={pair.mint_y.logo_url} alt="" width="24" height="24" />
               <span className="ms-2">{pair.mint_y.name}</span>
             </div>
-            <Input
+            <InputNumeric
               value={amounts.amountY}
-              type="number"
-              step="0.01"
-              placeholder="0"
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
-              onChange={v => onChangeQuoteAmount(v.target.value)}
+              onChangeValue={onChangeQuoteAmount}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
@@ -533,7 +526,6 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <Input
               value={formatPrice(priceRange.maxPrice, pair.mint_x.decimals)}
               className="h-11 grow-1 rounded-r-none border-r-0"
-              type="text"
               placeholder="0"
               onChange={v => console.log(v)}
               disabled={formState.submitting}
@@ -555,7 +547,6 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         <div className="w-4/12 md:w-1/12">
           <Label className="mb-2">Bins</Label>
           <Input
-            type="text"
             placeholder="69"
             className="h-11"
             value={Math.abs(binRangeRef.current[0]) + 1 + binRangeRef.current[1]}

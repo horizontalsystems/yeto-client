@@ -1,8 +1,7 @@
 import DLMM from '@yeto/dlmm/ts-client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
-import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from 'react'
+import { SyntheticEvent, useEffect, useMemo, useState } from 'react'
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -15,6 +14,7 @@ import { formatPrice, percentage } from '@/lib/utils'
 import { SlippagePopover } from '@/components/slippage-popover'
 import { Pair } from '@/components/dlmm/dlmm'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { InputNumeric } from '@/components/ui/input-numeric'
 
 interface DlmmSwapFormProps {
   pair: Pair
@@ -31,8 +31,8 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const [slippage, setSlippage] = useState(0.1)
   const [isTokenYisMain, setIsTokenYisMain] = useState(false)
 
-  const [amountX, setAmountX] = useState('')
-  const [amountY, setAmountY] = useState('')
+  const [amountX, setAmountX] = useState(0)
+  const [amountY, setAmountY] = useState(0)
 
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
@@ -61,18 +61,16 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
       return console.error('Wallet not connected')
     }
 
-    try {
-      const parsedAmountX = parseFloat(amountX)
-      const parsedAmountY = parseFloat(amountY)
-      if (!parsedAmountX || !parsedAmountY) {
-        return toast.error('Please enter valid amounts')
-      }
+    if (!amountX || !amountY) {
+      return toast.error('Please enter valid amounts')
+    }
 
+    try {
       setFormState({ submitting: true })
 
       const dlmmPool = await dlmmInstance
       const swapAmount = new BN(
-        isTokenYisMain ? parsedAmountY * 10 ** dlmmPool.tokenY.decimal : parsedAmountX * 10 ** dlmmPool.tokenX.decimal
+        isTokenYisMain ? amountY * 10 ** dlmmPool.tokenY.decimal : amountX * 10 ** dlmmPool.tokenX.decimal
       )
 
       const swapXtoY = !isTokenYisMain
@@ -114,23 +112,21 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
     }
   }
 
-  const handleChangeX = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
-    setAmountX(value)
-    const parsed = parseFloat(value)
-    if (!isNaN(parsed)) {
-      setAmountY((parsed * pricePerToken).toFixed(2))
+  const handleChangeX = (value: number | undefined) => {
+    setAmountX(value || 0)
+    if (value) {
+      setAmountY(value * pricePerToken)
     } else {
-      setAmountY('')
+      setAmountY(0)
     }
   }
 
-  const handleChangeY = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
-    setAmountY(value)
-    const parsed = parseFloat(value)
-    if (!isNaN(parsed)) {
-      setAmountX((parsed / pricePerToken).toFixed(2))
+  const handleChangeY = (value: number | undefined) => {
+    setAmountY(value || 0)
+    if (value) {
+      setAmountX(value / pricePerToken)
     } else {
-      setAmountX('')
+      setAmountX(0)
     }
   }
 
@@ -139,13 +135,13 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
       const { valueX, valueY } = balances
       if (!isTokenYisMain && valueX && valueX > 0) {
         const newX = percentage(percent, valueX)
-        setAmountX(newX.toString())
-        setAmountY((newX * pricePerToken).toFixed(2))
+        setAmountX(newX)
+        setAmountY(newX * pricePerToken)
       }
       if (isTokenYisMain && valueY && valueY > 0) {
         const newY = percentage(percent, valueY)
-        setAmountY(newY.toString())
-        setAmountX((newY / pricePerToken).toFixed(2))
+        setAmountY(newY)
+        setAmountX(newY / pricePerToken)
       }
     }
   }
@@ -156,13 +152,10 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         <img src={pair.mint_x.logo_url} alt={pair.mint_x.name} className="h-5 w-5 rounded-full" />
         <span className="ms-2 font-medium">{pair.mint_x.name}</span>
       </div>
-      <Input
-        type="number"
-        step=".01"
-        placeholder="0"
+      <InputNumeric
         className="h-11 ps-16 text-right"
         disabled={formState.submitting}
-        onChange={handleChangeX}
+        onChangeValue={handleChangeX}
         value={amountX}
         required
       />
@@ -175,13 +168,10 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
         <img src={pair.mint_y.logo_url} alt={pair.mint_y.name} className="h-5 w-5 rounded-full" />
         <span className="ms-2 font-medium">{pair.mint_y.name}</span>
       </div>
-      <Input
-        type="number"
-        step=".01"
-        placeholder="0"
+      <InputNumeric
         className="h-11 ps-16 text-right"
         disabled={formState.submitting}
-        onChange={handleChangeY}
+        onChangeValue={handleChangeY}
         value={amountY}
         required
       />

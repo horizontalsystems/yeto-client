@@ -4,7 +4,6 @@ import DLMM, { deriveLbPair2 } from '@yeto/dlmm/ts-client'
 import { SyntheticEvent, useState } from 'react'
 import { Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
 import { ApiCoinItem } from '@/lib/api'
@@ -18,6 +17,7 @@ import { ButtonConnect } from '@/components/button-connect'
 import { toast } from 'sonner'
 import { baseFeePercentages, binStepsByBaseFee, derivePresetParameter } from '@/lib/pool-utils'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { InputNumeric } from '@/components/ui/input-numeric'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
@@ -124,9 +124,9 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
     setErrors({ ...omit(errors, ['quote']) })
   }
 
-  const onChangeInitialPrice = (v: string) => {
+  const onChangeInitialPrice = (v: number | undefined) => {
     setErrors({ ...omit(errors, ['initialPrice']) })
-    setInitialPrice(parseFloat(v))
+    setInitialPrice(v || 1)
   }
 
   const onChangeBaseFee = (f: number) => {
@@ -219,14 +219,12 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       </div>
       <div className="mb-6">
         <div className="text-leah mb-3">Input Price</div>
-        <Input
-          required
-          type="number"
-          className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
+        <InputNumeric
           placeholder="1"
-          step="0.0001"
-          onChange={v => onChangeInitialPrice(v.target.value)}
+          onChangeValue={onChangeInitialPrice}
           disabled={formState.submitting}
+          className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
+          required
         />
         {errors.initialPrice && <div className="mt-1 text-sm text-red-400">{errors.initialPrice}</div>}
         <div className="text-gray pt-2 text-sm">

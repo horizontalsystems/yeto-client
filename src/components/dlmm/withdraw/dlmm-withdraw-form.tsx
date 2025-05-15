@@ -5,7 +5,6 @@ import DLMM, {
 } from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ButtonConnect } from '@/components/button-connect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -20,6 +19,7 @@ import { BinItem } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
 import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-skeleton'
 import { binIdToBinArrayIndex } from '@/lib/pool-utils'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { InputNumeric } from '@/components/ui/input-numeric'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -201,13 +201,10 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
         </div>
         <div className="mb-6 space-y-2">
           <div className="relative">
-            <Input
-              type="number"
-              step=".01"
-              placeholder="0"
+            <InputNumeric
               value={amountPercent}
               className="h-11 pe-7 text-right"
-              onChange={v => setAmountPercent(parseFloat(v.target.value) || 0)}
+              onChangeValue={v => setAmountPercent(v || 0)}
               disabled={formState.submitting}
               required
             />
