@@ -3,8 +3,8 @@
 import Decimal from 'decimal.js'
 import DLMM from '@yeto/dlmm/ts-client'
 import { DlmmListSkeleton } from '@/components/dlmm/dlmm-list-skeleton'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { useCallback, useEffect, useState } from 'react'
+import { PublicKey } from '@solana/web3.js'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { MyPoolListItem, Position } from '@/components/my-board/my-pool-list-item'
 import { getPoolsByAddress } from '@/lib/api'
@@ -12,6 +12,7 @@ import { Pair } from '@/components/dlmm/dlmm'
 import { BN } from '@coral-xyz/anchor'
 import { toast } from 'sonner'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { useConnection } from '@/hooks/use-connection'
 
 type MyPair = {
   pair: Pair
@@ -26,8 +27,7 @@ export function MyPoolList({ poolAddress }: { poolAddress?: string }) {
     submitting: false
   })
 
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
-  const connection = useMemo(() => new Connection(endpoint), [endpoint])
+  const connection = useConnection()
   const dlmmInstance = useCallback((address: string) => DLMM.create(connection, new PublicKey(address)), [connection])
 
   const onClosePosition = async (address: string, positionAddress: string) => {

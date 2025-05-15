@@ -5,7 +5,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { WalletConnectWalletAdapter } from '@walletconnect/solana-adapter'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { clusterApiUrl } from '@solana/web3.js'
+import { useClusterUrl } from '@/hooks/use-cluster-url'
 import {
   CoinbaseWalletAdapter,
   MathWalletAdapter,
@@ -17,8 +17,7 @@ import {
 import '../styles/solana-wallet-connect.css'
 
 export const SolanaProvider = ({ children }: { children: ReactNode }) => {
-  const network = WalletAdapterNetwork.Devnet
-  const endpoint = useMemo(() => clusterApiUrl(network), [network])
+  const endpoint = useClusterUrl()
 
   const wallets = useMemo(
     () => [

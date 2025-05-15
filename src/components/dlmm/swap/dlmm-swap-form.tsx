@@ -1,8 +1,6 @@
-import DLMM from '@yeto/dlmm/ts-client'
 import { Button } from '@/components/ui/button'
 import { ButtonConnect } from '@/components/button-connect'
-import { SyntheticEvent, useEffect, useMemo, useState } from 'react'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { SyntheticEvent, useEffect, useState } from 'react'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { ArrowDownUp } from 'lucide-react'
@@ -16,6 +14,7 @@ import { Pair } from '@/components/dlmm/dlmm'
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
 import { useRouter } from 'next/navigation'
+import { useDlmm } from '@/hooks/use-dlmm'
 
 interface DlmmSwapFormProps {
   pair: Pair
@@ -36,9 +35,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const [amountY, setAmountY] = useState(0)
 
   const router = useRouter()
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
-  const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
+  const { connection, dlmmInstance } = useDlmm(pair.address)
 
   useEffect(() => {
     const syncBalances = async () => {

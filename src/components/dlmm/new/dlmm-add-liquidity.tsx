@@ -1,6 +1,6 @@
 'use client'
 
-import DLMM, {
+import {
   calculateBidAskDistribution,
   calculateSpotDistribution,
   getBinArraysRequiredByPositionRange,
@@ -18,8 +18,8 @@ import { InputNumeric } from '@/components/ui/input-numeric'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
-import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PublicKey } from '@solana/web3.js'
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { binIdToBinArrayIndex, createBalancePosition, getBalance } from '@/lib/pool-utils'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -31,6 +31,7 @@ import { cn, formatPrice, percentage, percentageChange, toRounded } from '@/lib/
 import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { useDlmm } from '@/hooks/use-dlmm'
 
 export interface AddLiquidityProps {
   pair: Pair
@@ -74,9 +75,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     maxPriceChange: 0
   })
 
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
-  const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
+  const { connection, dlmmInstance } = useDlmm(pair.address)
 
   const [slippage, setSlippage] = useState(0.5)
 

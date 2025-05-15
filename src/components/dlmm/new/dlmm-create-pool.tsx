@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
 import { ApiCoinItem } from '@/lib/api'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 import { cn } from '@/lib/utils'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { BN } from '@coral-xyz/anchor'
@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { baseFeePercentages, binStepsByBaseFee, derivePresetParameter } from '@/lib/pool-utils'
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
+import { useConnection } from '@/hooks/use-connection'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
@@ -36,6 +37,8 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
   const [formState, setFormState] = useState<{ submitting: boolean; newPoolAddress?: string; error?: string }>({
     submitting: false
   })
+
+  const connection = useConnection()
 
   const handleSubmit = async (v: SyntheticEvent) => {
     v.preventDefault()
@@ -57,9 +60,6 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
 
     try {
       setFormState({ submitting: true })
-
-      const endpoint = clusterApiUrl('devnet')
-      const connection = new Connection(endpoint)
 
       const programId = new PublicKey(DLMM_PROGRAM_IDS.devnet)
       const tokenMintX = new PublicKey(base.address)

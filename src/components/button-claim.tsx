@@ -1,12 +1,12 @@
 'use client'
 
-import DLMM from '@yeto/dlmm/ts-client'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { linkToSolscan } from '@/lib/ui-utils'
+import { useDlmm } from '@/hooks/use-dlmm'
 
 export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: string; positionAddress: string }) {
   const { publicKey: walletPubKey, connected, sendTransaction } = useWallet()
@@ -14,9 +14,7 @@ export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: str
     submitting: false
   })
 
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
-  const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
+  const { connection, dlmmInstance } = useDlmm(poolAddress)
 
   const handleClaim = async () => {
     if (!walletPubKey || !connected) {

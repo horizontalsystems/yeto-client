@@ -1,14 +1,10 @@
-import DLMM, {
-  getBinArraysRequiredByPositionRange,
-  getBinFromBinArray,
-  getPriceOfBinByBinId
-} from '@yeto/dlmm/ts-client'
+import { getBinArraysRequiredByPositionRange, getBinFromBinArray, getPriceOfBinByBinId } from '@yeto/dlmm/ts-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ButtonConnect } from '@/components/button-connect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Info } from 'lucide-react'
@@ -21,6 +17,7 @@ import { binIdToBinArrayIndex } from '@/lib/pool-utils'
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
 import { useRouter } from 'next/navigation'
+import { useDlmm } from '@/hooks/use-dlmm'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -44,9 +41,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
   const binRangeRef = useRef<number[]>([-34, 34])
 
   const router = useRouter()
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
-  const connection = useMemo(() => new Connection(endpoint), [endpoint])
-  const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
+  const { connection, dlmmInstance } = useDlmm(poolAddress)
 
   const handleWithdraw = async (v: SyntheticEvent) => {
     v.preventDefault()
