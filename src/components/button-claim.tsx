@@ -54,8 +54,10 @@ export function ButtonClaim({ poolAddress, positionAddress }: { poolAddress: str
         })
     } catch (e) {
       console.log(e)
-      setFormState({ submitting: false })
-      toast.error('Claim fee failed')
+      let error = 'Claim fee failed'
+      if (e instanceof Error) error = e.message
+      setFormState({ submitting: false, error })
+      toast.error('Claim fee failed', { description: error })
     }
   }
 
