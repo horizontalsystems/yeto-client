@@ -20,6 +20,7 @@ import { DlmmWithdrawSkeleton } from '@/components/dlmm/withdraw/dlmm-withdraw-s
 import { binIdToBinArrayIndex } from '@/lib/pool-utils'
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
+import { useRouter } from 'next/navigation'
 
 interface DlmmWithdrawFormProps {
   pair: Pair
@@ -42,6 +43,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
 
   const binRangeRef = useRef<number[]>([-34, 34])
 
+  const router = useRouter()
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(poolAddress)), [connection, poolAddress])
@@ -93,6 +95,7 @@ export function DlmmWithdrawForm({ pair, poolAddress, positionAddress }: DlmmWit
             duration: 5000,
             description: linkToSolscan(signature)
           })
+          router.back()
         })
         .catch(e => {
           console.error(e)

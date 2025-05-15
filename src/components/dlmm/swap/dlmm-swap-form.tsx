@@ -15,6 +15,7 @@ import { SlippagePopover } from '@/components/slippage-popover'
 import { Pair } from '@/components/dlmm/dlmm'
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
+import { useRouter } from 'next/navigation'
 
 interface DlmmSwapFormProps {
   pair: Pair
@@ -34,6 +35,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
   const [amountX, setAmountX] = useState(0)
   const [amountY, setAmountY] = useState(0)
 
+  const router = useRouter()
   const endpoint = useMemo(() => clusterApiUrl('devnet'), [])
   const connection = useMemo(() => new Connection(endpoint), [endpoint])
   const dlmmInstance = useMemo(() => DLMM.create(connection, new PublicKey(pair.address)), [connection, pair.address])
@@ -99,6 +101,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
             duration: 5000,
             description: linkToSolscan(signature)
           })
+          router.back()
         })
         .catch(e => {
           console.error(e)
