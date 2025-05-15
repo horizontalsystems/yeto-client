@@ -79,9 +79,11 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
     <Tabs value={tab} onValueChange={setTab}>
       <TabsList>
         <div className="flex flex-row border-b">
-          <TabsTrigger value="pool" className="p-6">
-            1. Pool Creation
-          </TabsTrigger>
+          {!address && (
+            <TabsTrigger value="pool" className="p-6">
+              1. Pool Creation
+            </TabsTrigger>
+          )}
           <TabsTrigger value="liquidity" className="p-6" disabled={!poolAddress}>
             2. Adding liquidity
           </TabsTrigger>
