@@ -3,5 +3,5 @@ export const USDC_TOKEN_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 
 export const DLMM_PROGRAM_IDS = {
   devnet: 'G1qfD4kRvEz9jUaKqRsbGRgJtU8TiD6njQmW5JKaRTaq',
-  'mainnet-beta': 'G1qfD4kRvEz9jUaKqRsbGRgJtU8TiD6njQmW5JKaRTaq'
+  mainnet: 'yeto2qBQBVZtnLkyus8bShgfqbtVX1iiJjmZ1AwRQQ7'
 }

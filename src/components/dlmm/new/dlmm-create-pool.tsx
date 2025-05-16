@@ -61,7 +61,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
     try {
       setFormState({ submitting: true })
 
-      const programId = new PublicKey(DLMM_PROGRAM_IDS.devnet)
+      const programId = new PublicKey(DLMM_PROGRAM_IDS.mainnet)
       const tokenMintX = new PublicKey(base.address)
       const tokenMintY = new PublicKey(quote.address)
       const baseFactor = (baseFee * 10000 ** 2) / (100 * binStep)
