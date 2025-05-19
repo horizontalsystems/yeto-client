@@ -8,6 +8,7 @@ import {
   getPriceOfBinByBinId,
   StrategyType
 } from '@yeto/dlmm/ts-client'
+import Decimal from 'decimal.js'
 import { toast } from 'sonner'
 import { omit } from 'es-toolkit/compat'
 import { useDebouncedCallback } from 'use-debounce'
@@ -27,7 +28,7 @@ import { DlmmAddLiquiditySkeleton } from '@/components/dlmm/new/dlmm-add-liquidi
 import { Switch } from '@/components/ui/switch'
 import { ButtonConnect } from '@/components/button-connect'
 import { BinItem, DlmmAddLiquidityBins } from '@/components/dlmm/new/dlmm-add-liquidity-bins'
-import { cn, formatPrice, percentage, percentageChange, toRounded } from '@/lib/utils'
+import { cn, formatPrice, percentageChange, toRounded } from '@/lib/utils'
 import { Pair } from '@/components/dlmm/dlmm'
 import { SlippagePopover } from '@/components/slippage-popover'
 import { linkToSolscan } from '@/lib/ui-utils'
@@ -59,9 +60,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const strategies = ['Spot', 'Bid-Ask']
   const [strategy, setStrategy] = useState<string>(strategies[0])
-  const [autoFill, setAutoFill] = useState(false)
 
-  const autoFillRef = useRef<number>(1)
+  const autoFillRef = useRef(false)
   const binRangeRef = useRef<number[]>(binRange)
   const binShiftRef = useRef<number>(0)
 
@@ -307,13 +307,14 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
     }
   }
 
-  const onChangeBaseAmount = async (amountX: number | undefined) => {
+  const onChangeBaseAmount = async (value: Decimal) => {
+    const amountX = value.toNumber()
     setErrors({ ...omit(errors, ['amountX']) })
 
     let amountY = amounts.amountY
-    if (autoFill && amountX) {
+    if (autoFillRef.current) {
       const pool = await dlmmInstance
-      amountY = toRounded(parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))) * amountX)
+      amountY = new Decimal(pool.fromPricePerLamport(Number(activeBinData.price))).mul(value).toNumber()
     }
 
     autoShift(amountX, amountY)
@@ -323,17 +324,18 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const onMaxBaseAmount = async () => {
     if (balances.balanceX !== undefined) {
-      await onChangeBaseAmount(balances.balanceX)
+      await onChangeBaseAmount(new Decimal(balances.balanceX))
     }
   }
 
-  const onChangeQuoteAmount = async (amountY: number | undefined) => {
+  const onChangeQuoteAmount = async (value: Decimal) => {
+    const amountY = value.toNumber()
     setErrors({ ...omit(errors, ['amountY']) })
 
     let amountX = amounts.amountX
-    if (autoFill && amountY) {
+    if (autoFillRef.current) {
       const pool = await dlmmInstance
-      amountX = toRounded(amountY / parseFloat(pool.fromPricePerLamport(Number(activeBinData.price))))
+      amountX = value.div(new Decimal(pool.fromPricePerLamport(Number(activeBinData.price)))).toNumber()
     }
 
     autoShift(amountX, amountY)
@@ -343,18 +345,21 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const onMaxQuoteAmount = async () => {
     if (balances.balanceY !== undefined) {
-      await onChangeQuoteAmount(balances.balanceY)
+      await onChangeQuoteAmount(new Decimal(balances.balanceY))
     }
   }
 
   const onChangeAutoFill = async (checked: boolean) => {
-    setAutoFill(checked)
-    if (balances.balanceX === undefined || balances.balanceY === undefined) {
+    autoFillRef.current = checked
+
+    if (balances.balanceX === undefined || balances.balanceY === undefined || !checked) {
       return
     }
 
-    if (checked) {
-      await onChangeBaseAmount(toRounded(percentage(autoFillRef.current, balances.balanceX)))
+    if (amounts.amountX && amounts.amountX > 0) {
+      await onChangeBaseAmount(new Decimal(amounts.amountX))
+    } else if (amounts.amountY && amounts.amountY > 0) {
+      await onChangeQuoteAmount(new Decimal(amounts.amountY))
     }
   }
 
@@ -380,7 +385,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
           <div className="flex gap-2">
             <div className="flex items-center">
               <span className="text-muted-foreground text-sm text-nowrap">Auto Fill</span>
-              <Switch className="ms-1" onCheckedChange={onChangeAutoFill} checked={autoFill} />
+              <Switch className="ms-1" onCheckedChange={onChangeAutoFill} />
             </div>
             <SlippagePopover defaultValue={slippage.toString()} onChange={value => setSlippage(parseFloat(value))} />
           </div>
@@ -400,7 +405,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountX}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
-              onChangeValue={onChangeBaseAmount}
+              // onChangeValue={onChangeBaseAmount}
+              onChange={v => onChangeBaseAmount(new Decimal(v.target.value || 0))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
@@ -431,7 +437,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountY}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
-              onChangeValue={onChangeQuoteAmount}
+              // onChangeValue={onChangeQuoteAmount}
+              onChange={v => onChangeQuoteAmount(new Decimal(v.target.value || 0))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
