@@ -64,15 +64,16 @@ export function DlmmNew({ poolAddress: address }: { poolAddress?: string }) {
     )
   }
 
-  const onCreatePool = (address: string) => {
-    console.log(address)
+  const onCreatePool = (newPair: Pair) => {
+    setPair(newPair)
   }
 
   const onClickNext = (address: string) => {
     setPoolAddress(address)
-    fetchPair(address, 1).then(() => {
-      setTab('liquidity')
-    })
+    setTab('liquidity')
+    // fetchPair(address, 1).then(() => {
+    //   setTab('liquidity')
+    // })
   }
 
   return (

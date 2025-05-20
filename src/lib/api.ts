@@ -3,7 +3,7 @@ export type ApiCoinItem = {
   name: string
   symbol: string
   decimals: number
-  logoURI: string
+  logo_url: string
 }
 
 export async function getPools(query: string, page = 0, limit = 20) {
@@ -76,54 +76,15 @@ export async function searchCoins(query: string) {
         return {}
       }
 
-      const coinList = results.hits.map((item: { document: ApiCoinItem }) => {
+      return results.hits.map((item: { document: ApiCoinItem }) => {
         return {
           address: item.document.address,
           name: item.document.name,
           symbol: item.document.symbol,
           decimals: item.document.decimals,
-          logoURI: item.document.logoURI
+          logo_url: item.document.logo_url
         }
       })
-      // Todo: devnet token, for testing only, remove
-      coinList.unshift({
-        address: 'CpZKSV4mVAM7EjR5vYv5kLBr6cZCG5WyhHCw68SSwtUx',
-        name: 'CpZ Devnet',
-        symbol: 'CpZ',
-        decimals: 9,
-        logoURI: 'https://statics.solscan.io/solscan-img/solana_icon.svg'
-      })
-      coinList.unshift({
-        address: 'Zsu2MsbxVta1CiTyJod85j9UBrKLMJNvSeZX4HECbDG',
-        name: 'M2',
-        symbol: 'M2',
-        decimals: 6,
-        logoURI: 'https://statics.solscan.io/solscan-img/solana_icon.svg'
-      })
-      coinList.unshift({
-        address: '7KB5DZ2KptXSUzU5B9oyKGqg7kx68ESMa4p7anN1khUY',
-        name: 'Solana Gold',
-        symbol: 'GOLDSOL',
-        decimals: 6,
-        logoURI:
-          'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
-      })
-      coinList.unshift({
-        address: 'BoeHw5peaJ2krA1gf7KpLNCNwurvXZtytpTuEFUbvvC',
-        name: 'Bonk token',
-        symbol: 'BONK',
-        decimals: 5,
-        logoURI: 'https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q6wqwf5cSY7I'
-      })
-      coinList.unshift({
-        address: '2qF61Uh1GTsktNW2Efw7pX2dvoR3i5GCnQAMg6igACk8',
-        name: 'USDC',
-        symbol: 'USDC',
-        decimals: 6,
-        logoURI:
-          'https://w7.pngwing.com/pngs/153/594/png-transparent-solana-coin-sign-icon-shiny-golden-symmetric-geometrical-design.png'
-      })
-      return coinList
     })
 
   return {

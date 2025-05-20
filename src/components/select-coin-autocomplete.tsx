@@ -49,7 +49,7 @@ export function SelectCoinAutocomplete({ onSelect, error, placeholder, disabled 
         <Button variant="outline" role="combobox" className="w-full justify-start">
           {selected ? (
             <>
-              <img src={selected.logoURI} alt="" width="24" height="24" />
+              <img src={selected.logo_url} alt="" width="24" height="24" />
               <span>{selected.symbol}</span>
             </>
           ) : (
@@ -92,7 +92,7 @@ function SelectCoinSearch({ selectedResult, onSelectResult }: SearchProps) {
         {data?.items.map(item => {
           return (
             <CommandItem key={item.address} onSelect={() => onSelectResult(item)} value={item.name}>
-              <img src={item.logoURI} alt="" width="24" height="24" /> {item.symbol}
+              <img src={item.logo_url} alt="" width="24" height="24" /> {item.symbol}
               <Check
                 className={cn('ml-auto', selectedResult?.address === item.address ? 'opacity-100' : 'opacity-0')}
               />

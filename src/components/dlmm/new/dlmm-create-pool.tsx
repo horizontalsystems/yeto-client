@@ -21,9 +21,10 @@ import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
 import { useConnection } from '@/hooks/use-connection'
 import { usePairPrice } from '@/hooks/use-pair-price'
+import { Pair } from '@/components/dlmm/dlmm'
 
 interface DlmmCreatePoolProps {
-  onCreate: (address: string) => void
+  onCreate: (newPair: Pair) => void
   onClickNext: (address: string) => void
   fetchingPair: boolean
 }
@@ -100,7 +101,22 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
       sendTransaction(rawTx, connection)
         .then(signature => {
           setFormState({ submitting: false, newPoolAddress: poolAddress.toBase58() })
-          onCreate(poolAddress.toBase58())
+          onCreate({
+            address: poolAddress.toBase58(),
+            current_price: '',
+            mint_x: base,
+            mint_y: quote,
+            liquidity: '',
+            apr: '',
+            bin_step: binStep,
+            base_fee_percentage: baseFee.toString(),
+            max_fee_percentage: '',
+            protocol_fee_percentage: '',
+            reserve_x_amount: '',
+            reserve_y_amount: '',
+            volume: {},
+            fees: {}
+          })
 
           toast.success('Pool created', {
             duration: 5000,
