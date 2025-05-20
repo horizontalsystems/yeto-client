@@ -1,8 +1,9 @@
 'use client'
 
+import Decimal from 'decimal.js'
 import DLMM, { deriveLbPair2 } from '@yeto/dlmm/ts-client'
 import { SyntheticEvent, useState } from 'react'
-import { Info } from 'lucide-react'
+import { ArrowRightLeft, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SelectNumber } from '@/components/select-number'
 import { SelectCoinAutocomplete } from '@/components/select-coin-autocomplete'
@@ -19,6 +20,7 @@ import { baseFeePercentages, binStepsByBaseFee, derivePresetParameter } from '@/
 import { linkToSolscan } from '@/lib/ui-utils'
 import { InputNumeric } from '@/components/ui/input-numeric'
 import { useConnection } from '@/hooks/use-connection'
+import { usePairPrice } from '@/hooks/use-pair-price'
 
 interface DlmmCreatePoolProps {
   onCreate: (address: string) => void
@@ -32,12 +34,16 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
   const [quote, setQuote] = useState<ApiCoinItem>()
   const [binStep, setBinStep] = useState(1)
   const [baseFee, setBaseFee] = useState(0.01)
+
   const [initialPrice, setInitialPrice] = useState(1)
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [formState, setFormState] = useState<{ submitting: boolean; newPoolAddress?: string; error?: string }>({
     submitting: false
   })
 
+  const [isPriceInverse, setIsPriceInverse] = useState(false)
+  const price = usePairPrice(base?.address, quote?.address)
   const connection = useConnection()
 
   const handleSubmit = async (v: SyntheticEvent) => {
@@ -61,7 +67,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
     try {
       setFormState({ submitting: true })
 
-      const programId = new PublicKey(DLMM_PROGRAM_IDS.mainnet)
+      const programId = new PublicKey(DLMM_PROGRAM_IDS.devnet)
       const tokenMintX = new PublicKey(base.address)
       const tokenMintY = new PublicKey(quote.address)
       const baseFactor = (baseFee * 10000 ** 2) / (100 * binStep)
@@ -76,8 +82,9 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         setErrors({ ...omit(errors, ['poolExists']) })
       }
 
+      const initialPriceValue = isPriceInverse ? new Decimal(1).div(initialPrice).toNumber() : initialPrice
       const presetParamAddress = derivePresetParameter(programId, binStep, baseFactor)
-      const pricePerLamport = DLMM.getPricePerLamport(base.decimals, quote.decimals, initialPrice)
+      const pricePerLamport = DLMM.getPricePerLamport(base.decimals, quote.decimals, initialPriceValue)
       const binIdFromPrice = DLMM.getBinIdFromPrice(pricePerLamport, binStep, true)
       const rawTx = await DLMM.createLbPair(
         connection,
@@ -126,9 +133,9 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
     setErrors({ ...omit(errors, ['quote']) })
   }
 
-  const onChangeInitialPrice = (v: number | undefined) => {
+  const onChangeInitialPrice = (v: string) => {
     setErrors({ ...omit(errors, ['initialPrice']) })
-    setInitialPrice(v || 1)
+    setInitialPrice(parseFloat(v) || 1)
   }
 
   const onChangeBaseFee = (f: number) => {
@@ -167,6 +174,23 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         <ButtonConnect />
       </div>
     )
+  }
+
+  const priceInverseSymbols = isPriceInverse
+    ? `${base?.symbol} per ${quote?.symbol}`
+    : `${quote?.symbol} per ${base?.symbol}`
+
+  const priceInverseValue = (baseValue: string, quoteValue: string) => {
+    if (isPriceInverse) {
+      return new Decimal(quoteValue).div(new Decimal(baseValue))
+    } else {
+      return new Decimal(baseValue)
+    }
+  }
+
+  const onPriceInverse = () => {
+    setInitialPrice(new Decimal(1).div(initialPrice).toNumber())
+    setIsPriceInverse(!isPriceInverse)
   }
 
   return (
@@ -220,18 +244,31 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
         </div>
       </div>
       <div className="mb-6">
-        <div className="text-leah mb-3">Input Price</div>
-        <InputNumeric
-          placeholder="1"
-          onChangeValue={onChangeInitialPrice}
-          disabled={formState.submitting}
-          className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
-          required
-        />
-        {errors.initialPrice && <div className="mt-1 text-sm text-red-400">{errors.initialPrice}</div>}
-        <div className="text-gray pt-2 text-sm">
+        <div className="text-leah mb-2">Initial Price</div>
+        <div className="text-gray pb-2 text-sm">
           Please verify that this price matches the current market price to avoid losing initial liquidity.
         </div>
+        <div className="relative flex grow-1">
+          <InputNumeric
+            value={initialPrice}
+            placeholder="1"
+            onChange={v => onChangeInitialPrice(v.target.value)}
+            disabled={formState.submitting}
+            className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
+            required
+          />
+          <div className="absolute inset-y-3 right-0 me-3 flex items-center">
+            {quote && base && <span className="text-gray me-3 text-sm">{priceInverseSymbols}</span>}
+            <ArrowRightLeft className="cursor-pointer" size={20} color="#fff" onClick={onPriceInverse} />
+          </div>
+        </div>
+        {errors.initialPrice && <div className="mt-1 text-sm text-red-400">{errors.initialPrice}</div>}
+        {price.basePrice !== undefined && price.quotePrice !== undefined && (
+          <div className="text-gray pt-2 text-sm">
+            Estimated market price: {priceInverseValue(price.basePrice, price.quotePrice).toString()}{' '}
+            {priceInverseSymbols}. Verify before using.
+          </div>
+        )}
       </div>
       {errors.poolExists && (
         <div className="mb-6 rounded-lg border border-yellow-400 p-4">
