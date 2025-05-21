@@ -270,9 +270,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const calculateBinsThrottle = useDebouncedCallback(calculateBins, 200)
 
-  const syncBalance = async () => {
-    if (!walletPubKey) return
-
+  const syncBalance = async (walletPubKey: PublicKey) => {
     try {
       const dlmmPool = await dlmmInstance
       setBalances({
@@ -280,7 +278,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         balanceY: await getBalance(connection, walletPubKey, dlmmPool.tokenY.publicKey)
       })
     } catch (e) {
-      console.log(e)
+      console.log('syncBalance error', e)
+      setBalances({ balanceX: 0, balanceY: 0 })
     }
   }
 
@@ -294,8 +293,8 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   }, [pair.address])
 
   useEffect(() => {
-    syncBalance()
-  }, [walletPubKey])
+    if (walletPubKey) syncBalance(walletPubKey)
+  }, [dlmmInstance, pair.address, syncBalance, walletPubKey])
 
   const autoShift = (amountX: number = 0, amountY: number = 0) => {
     if (amountX > 0 && amountY === 0) {

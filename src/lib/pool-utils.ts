@@ -90,7 +90,7 @@ export async function getBalance(connection: Connection, walletPubkey: PublicKey
     const balance = await connection.getTokenAccountBalance(userTokenAddress, 'confirmed')
     return balance.value.uiAmount || 0
   } catch (e) {
-    console.log(e)
+    console.log('getBalance error', e)
     return 0
   }
 }

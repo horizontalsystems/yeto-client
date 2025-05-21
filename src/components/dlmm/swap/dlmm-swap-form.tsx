@@ -51,7 +51,7 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
       })
     }
     syncBalances()
-  }, [connection, dlmmInstance, walletPubKey])
+  }, [connection, dlmmInstance, walletPubKey, pair.address])
 
   const handleSwap = async (v: SyntheticEvent) => {
     v.preventDefault()
