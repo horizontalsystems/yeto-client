@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { usePathname } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { SearchInput } from '@/components/dlmm/dlmm-search-input'
 import { DlmmListItem } from '@/components/dlmm/dlmm-list-item'
@@ -22,10 +23,21 @@ export function DlmmList() {
   const [page, setPage] = useState(0)
   const limit = 20
 
+  const queryClient = useQueryClient()
+  const pathname = usePathname()
+  const pathPrevRef = useRef<string | null>(null)
+
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['pools', searchText, page],
     queryFn: () => getPools(searchText, page, limit)
   })
+
+  useEffect(() => {
+    if (pathPrevRef.current === '/dlmm/new') {
+      queryClient.refetchQueries({ queryKey: ['pools', searchText, page] })
+    }
+    pathPrevRef.current = pathname
+  }, [page, pathname, queryClient, searchText])
 
   const onHandleSearch = useDebouncedCallback((value: string) => {
     setPage(0)
@@ -66,8 +78,9 @@ export function DlmmList() {
               let volume = 0
               let apr = 0
               const pairs: Pair[] = []
+              const poolPairs = pool.pairs || []
 
-              pool.pairs.forEach(pair => {
+              poolPairs.forEach(pair => {
                 tvl += parseFloat(pair.liquidity) || 0
                 volume += parseFloat(pair.volume['hour_24']) || 0
                 apr += parseFloat(pair.apr) || 0
