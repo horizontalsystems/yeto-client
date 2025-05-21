@@ -404,14 +404,18 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountX}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
-              // onChangeValue={onChangeBaseAmount}
               onChange={v => onChangeBaseAmount(new Decimal(v.target.value || 0))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
-              <div className="text-gray flex items-center text-sm">
-                <span className="me-1">Balance</span>
-                {balances.balanceX === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceX}
+              <div className="text-gray flex flex-col text-sm">
+                <div>
+                  <span className="me-1">Balance</span>
+                  {balances.balanceX === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceX}
+                </div>
+                {balances.balanceX !== undefined && balances.balanceX <= 0 && (
+                  <div className="text-red-400">Insufficient balance</div>
+                )}
               </div>
               <Button
                 type="button"
@@ -436,14 +440,18 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountY}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
-              // onChangeValue={onChangeQuoteAmount}
               onChange={v => onChangeQuoteAmount(new Decimal(v.target.value || 0))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
-              <div className="text-gray flex items-center text-sm">
-                <span className="me-1">Balance</span>
-                {balances.balanceY === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceY}
+              <div className="text-gray flex flex-col text-sm">
+                <div>
+                  <span className="me-1">Balance</span>
+                  {balances.balanceY === undefined ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceY}
+                </div>
+                {balances.balanceY !== undefined && balances.balanceY <= 0 && (
+                  <div className="text-red-400">Insufficient balance</div>
+                )}
               </div>
               <Button
                 type="button"
@@ -562,7 +570,12 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
         </div>
       </div>
       {connected ? (
-        <Button variant="light" type="submit" className="cursor-pointer" disabled={formState.submitting}>
+        <Button
+          variant="light"
+          type="submit"
+          className="cursor-pointer"
+          disabled={formState.submitting || !balances.balanceX || !balances.balanceY}
+        >
           Add Liquidity
         </Button>
       ) : (
