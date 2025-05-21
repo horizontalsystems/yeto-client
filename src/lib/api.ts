@@ -6,6 +6,14 @@ export type ApiCoinItem = {
   logo_url: string
 }
 
+export type ApiTokenDocument = {
+  address: string
+  name: string
+  symbol: string
+  decimals: number
+  logoURI: string
+}
+
 export async function getPools(query: string, page = 0, limit = 20) {
   let apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/dlmm/all_by_groups?page=${page}&limit=${limit}&sort_key=liquidity&order_by=desc`
   if (query.length) {
@@ -76,13 +84,13 @@ export async function searchCoins(query: string) {
         return {}
       }
 
-      return results.hits.map((item: { document: ApiCoinItem }) => {
+      return results.hits.map((item: { document: ApiTokenDocument }) => {
         return {
           address: item.document.address,
           name: item.document.name,
           symbol: item.document.symbol,
           decimals: item.document.decimals,
-          logo_url: item.document.logo_url
+          logo_url: item.document.logoURI
         }
       })
     })
