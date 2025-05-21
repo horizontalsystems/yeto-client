@@ -37,7 +37,7 @@ export function DlmmList() {
     return <DlmmListSkeleton withSearchInput />
   }
 
-  const hasNextPage = data.length === limit
+  const hasNextPage = data?.length === limit
 
   return (
     <div className="mb-10 flex flex-col overflow-hidden rounded-3xl border">
