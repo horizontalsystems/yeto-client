@@ -77,7 +77,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
 
   const { connection, dlmmInstance } = useDlmm(pair.address)
   const { activeBinId, activeBinPrice, syncActiveBin } = useActiveBin(dlmmInstance)
-  const { balances, loading: loadingBalance } = useTokensBalances(connection, dlmmInstance, walletPubKey)
+  const { balances, loading: loadingBalance } = useTokensBalances(connection, dlmmInstance, walletPubKey, 30000)
 
   const [slippage, setSlippage] = useState(0.5)
 
@@ -398,7 +398,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
                   <span className="me-1">Balance</span>
                   {loadingBalance ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceX}
                 </div>
-                {balances.balanceX <= 0 && <div className="text-red-400">Insufficient balance</div>}
+                {!!amounts.amountX && balances.balanceX <= 0 && (
+                  <div className="text-red-400">Insufficient balance</div>
+                )}
               </div>
               <Button
                 type="button"
@@ -432,7 +434,9 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
                   <span className="me-1">Balance</span>
                   {loadingBalance ? <Skeleton className="ms-1 mt-1 h-4 w-20" /> : balances.balanceY}
                 </div>
-                {balances.balanceY <= 0 && <div className="text-red-400">Insufficient balance</div>}
+                {!!amounts.amountY && balances.balanceY <= 0 && (
+                  <div className="text-red-400">Insufficient balance</div>
+                )}
               </div>
               <Button
                 type="button"
@@ -555,7 +559,12 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
           variant="light"
           type="submit"
           className="cursor-pointer"
-          disabled={formState.submitting || balances.balanceY <= 0 || balances.balanceX <= 0}
+          disabled={
+            formState.submitting ||
+            (!amounts.amountX && !amounts.amountY) ||
+            (!!amounts.amountX && balances.balanceX <= 0) ||
+            (!!amounts.amountY && balances.balanceY <= 0)
+          }
         >
           Add Liquidity
         </Button>
