@@ -17,13 +17,21 @@ export function createChartStrategy(ctx: CanvasRenderingContext2D, radius: numbe
           data: [],
           backgroundColor: colors.tokenX,
           borderRadius: radius,
-          label: xName
+          label: xName,
+          parsing: {
+            xAxisKey: 'value',
+            yAxisKey: 'value'
+          }
         },
         {
           data: [],
           backgroundColor: colors.tokenY,
           borderRadius: radius,
-          label: yName
+          label: yName,
+          parsing: {
+            xAxisKey: 'value',
+            yAxisKey: 'value'
+          }
         }
       ]
     },
@@ -55,7 +63,16 @@ export function createChartStrategy(ctx: CanvasRenderingContext2D, radius: numbe
             label: () => '',
             afterLabel: context => {
               if (context.raw) {
-                return `Price: ${context.label} \n${context.dataset.label}: ${context.formattedValue}`
+                const raw = context.raw as { x: number; y: number; value: number }
+                const label = context.dataset.label
+                const price = context.label
+
+                if ((label === xName && raw.x <= 0) || (label === yName && raw.y <= 0)) {
+                  return ''
+                }
+
+                const value = label === xName ? raw.x : raw.y
+                return `Price: ${price}\n${label}: ${value}`
               } else {
                 return ''
               }

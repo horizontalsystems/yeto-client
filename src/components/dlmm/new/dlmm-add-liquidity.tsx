@@ -307,7 +307,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
   }
 
   const onMaxBaseAmount = async () => {
-    if (balances.balanceX < 0) {
+    if (balances.balanceX > 0) {
       await onChangeBaseAmount(new Decimal(balances.balanceX))
     }
   }

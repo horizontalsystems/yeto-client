@@ -91,8 +91,20 @@ export function DlmmAddLiquidityBins({
 
     const chart = strategyChartRef.current
     chart.data.labels = filtered.map(bin => bin.price)
-    chart.data.datasets[0].data = filtered.map(bin => bin.distributionX)
-    chart.data.datasets[1].data = filtered.map(bin => bin.distributionY)
+    chart.data.datasets[0].data = filtered.map(bin => {
+      return {
+        x: bin.distributionX,
+        y: bin.distributionY,
+        value: bin.distributionX
+      }
+    })
+    chart.data.datasets[1].data = filtered.map(bin => {
+      return {
+        x: bin.distributionX,
+        y: bin.distributionY,
+        value: bin.distributionY * (1 / Number(bin.price))
+      }
+    })
     chart.update()
   }, [binsCopy, strategy, activeBinId, binRangeRef, binShiftRef, xName, yName])
 
