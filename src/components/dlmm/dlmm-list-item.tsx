@@ -1,15 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import Decimal from 'decimal.js'
 import { useState } from 'react'
 import { cn, formatUsd, toPercent } from '@/lib/utils'
 import { Pair } from '@/components/dlmm/dlmm'
 
 export type PoolItemProps = {
   name: string
-  tvl: number
-  volume: number
-  apr: number
+  tvl: Decimal
+  volume: Decimal
+  apr: Decimal
   pairs: Pair[]
 }
 
@@ -34,7 +35,7 @@ export function DlmmListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
                       </span>
                       <span className="ms-2 text-sm">
                         <span className="text-gray">Fee</span>
-                        <span className="text-leah ms-1">{parseFloat(pair.base_fee_percentage) * 100}%</span>
+                        <span className="text-leah ms-1">{parseFloat(pair.base_fee_percentage || '0') * 100}%</span>
                       </span>
                     </div>
                   </div>
@@ -119,7 +120,7 @@ export function DlmmListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
               </div>
               <div className="flex items-center justify-between">
                 <div className="text-muted-foreground text-sm">APR</div>
-                <div className="font-medium">{toPercent(apr)}</div>
+                <div className="font-medium">{toPercent(apr.toNumber())}</div>
               </div>
             </div>
           </div>
@@ -146,7 +147,7 @@ export function DlmmListItem({ name, tvl, volume, apr, pairs }: PoolItemProps) {
           </div>
           <div className="w-[20%] px-6 py-4">{formatUsd(tvl)}</div>
           <div className="w-[20%] px-6 py-4">{formatUsd(volume)}</div>
-          <div className="w-[20%] px-6 py-4">{toPercent(apr)}</div>
+          <div className="w-[20%] px-6 py-4">{toPercent(apr.toNumber())}</div>
         </div>
       </div>
       {showPairs && renderPairs()}

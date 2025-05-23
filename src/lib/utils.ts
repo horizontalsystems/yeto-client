@@ -20,7 +20,7 @@ export function truncate(text: string, maxLength: number = 15) {
 }
 
 export function toPercent(value: number | string) {
-  return (typeof value === 'string' ? parseFloat(value) : value).toFixed(2) + '%'
+  return formatNumber(value, 3) + '%'
 }
 
 export function toRounded(value: number) {

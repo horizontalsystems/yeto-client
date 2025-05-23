@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Decimal from 'decimal.js'
 import { useState } from 'react'
 import { cn, formatNumber, formatPrice, toPercent } from '@/lib/utils'
 import { ArrowUpFromLine, Ellipsis, Plus, X } from 'lucide-react'
@@ -28,8 +29,11 @@ export type PoolItemProps = {
 export function MyPoolListItem({ pair, positions, onClosePosition }: PoolItemProps) {
   const [showPairs, setShowPairs] = useState(false)
 
-  const totalDeposit = positions.map(a => parseFloat(a.totalDeposit)).reduce((acc, item) => acc + item, 0)
-  const totalFee = positions.map(a => parseFloat(a.unclaimedFee)).reduce((acc, item) => acc + item, 0)
+  const totalDeposit = positions
+    .map(a => new Decimal(a.totalDeposit))
+    .reduce((acc, item) => acc.add(item), new Decimal(0))
+
+  const totalFee = positions.map(a => new Decimal(a.unclaimedFee)).reduce((acc, item) => acc.add(item), new Decimal(0))
 
   return (
     <div className="border-t">

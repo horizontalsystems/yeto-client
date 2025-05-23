@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Decimal from 'decimal.js'
 import { useEffect, useRef, useState } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -74,16 +75,16 @@ export function DlmmList() {
               <div className="w-[20%] px-6 py-3 font-medium">APR</div>
             </div>
             {data.map((pool: Pool, index: number) => {
-              let tvl = 0
-              let volume = 0
-              let apr = 0
+              let tvl = new Decimal(0)
+              let volume = new Decimal(0)
+              let apr = new Decimal(0)
               const pairs: Pair[] = []
               const poolPairs = pool.pairs || []
 
               poolPairs.forEach(pair => {
-                tvl += parseFloat(pair.liquidity) || 0
-                volume += parseFloat(pair.volume['hour_24']) || 0
-                apr += parseFloat(pair.apr) || 0
+                tvl = tvl.add(new Decimal(pair.liquidity || 0))
+                volume = volume.add(new Decimal(pair.volume['hour_24'] || 0))
+                apr = apr.add(new Decimal(pair.apr || 0))
                 pairs.push(pair)
               })
 

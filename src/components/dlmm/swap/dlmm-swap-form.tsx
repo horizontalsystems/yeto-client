@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js'
 import { Button } from '@/components/ui/button'
 import { ButtonConnect } from '@/components/button-connect'
 import { SyntheticEvent, useEffect, useState } from 'react'
@@ -41,7 +42,8 @@ export function DlmmSwapForm({ pair }: DlmmSwapFormProps) {
     const syncBalances = async () => {
       const dlmmPool = await dlmmInstance
       const activeBin = await dlmmPool.getActiveBin()
-      setPricePerToken(parseFloat(dlmmPool.fromPricePerLamport(Number(activeBin.price))))
+      const price = new Decimal(dlmmPool.fromPricePerLamport(Number(activeBin.price)))
+      setPricePerToken(price.toNumber())
 
       if (!walletPubKey) return
 
