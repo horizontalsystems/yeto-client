@@ -20,6 +20,7 @@ import { TradingVolumeChart } from '@/components/chart/trading-volume-chart'
 import { DlmmTransactions } from '@/components/dlmm/dlmm-transactions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MyPoolList } from '@/components/my-board/my-pool-list'
+import { ButtonClaimProtocolFee } from '@/components/button-claim-protocol-fee'
 
 export type Pair = {
   address: string
@@ -99,6 +100,7 @@ export function Dlmm({ address }: { address: string }) {
               </span>
             </div>
             <div className="flex space-x-3">
+              <ButtonClaimProtocolFee poolAddress={address} />
               <Link href={`/dlmm/swap/${address}`}>
                 <Button variant="default" className="cursor-pointer">
                   Swap
