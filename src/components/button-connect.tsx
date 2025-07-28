@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { ChevronDown } from 'lucide-react'
-
-function shortenAddress(address: string): string {
-  return `${address.slice(0, 4)}..${address.slice(-4)}`
-}
+import { ButtonConnectIcon } from '@/components/button-connect-icon'
 
 export function ButtonConnect() {
   const { wallet, publicKey, connected, connect, disconnect, connecting } = useWallet()
@@ -68,24 +65,21 @@ export function ButtonConnect() {
     }
   }, [dropdownOpen])
 
+  const onClick = () => {
+    if (!wallet) {
+      setVisible(true)
+    } else {
+      setDropdownOpen(prev => !prev)
+    }
+  }
+
   return (
     <div className="relative z-50 inline-block text-left" ref={dropdownRef}>
       <button
-        onClick={() => {
-          if (!wallet) {
-            setVisible(true)
-          } else {
-            setDropdownOpen(prev => !prev)
-          }
-        }}
+        onClick={onClick}
         className="bg-blue flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow transition hover:bg-blue-400"
       >
-        {wallet?.adapter?.icon && <img src={wallet.adapter.icon} alt="wallet icon" className="h-5 w-5 rounded-full" />}
-        {connected && publicKey
-          ? shortenAddress(publicKey.toBase58())
-          : wallet
-            ? wallet.adapter.name
-            : 'Connect Wallet'}
+        <ButtonConnectIcon />
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
 
