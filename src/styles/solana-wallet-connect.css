@@ -10,10 +10,10 @@
   font-family: 'DM Sans', 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 16px;
   font-weight: 600;
-  height: 48px;
-  line-height: 48px;
+  height: 40px;
+  line-height: 40px;
   padding: 0 24px;
-  border-radius: 8px;
+  border-radius: 16px;
 }
 
 .wallet-adapter-button-trigger {

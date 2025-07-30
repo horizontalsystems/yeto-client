@@ -1,12 +1,22 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { ChevronDown } from 'lucide-react'
 import { ButtonConnectIcon } from '@/components/button-connect-icon'
 
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+)
+
 export function ButtonConnect() {
+  return <WalletMultiButtonDynamic />
+}
+
+export function ButtonConnectS() {
   const { wallet, publicKey, connected, connect, disconnect, connecting } = useWallet()
   const { setVisible } = useWalletModal()
   const [dropdownOpen, setDropdownOpen] = useState(false)
