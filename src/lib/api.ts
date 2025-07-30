@@ -87,7 +87,7 @@ export async function searchCoins(query: string) {
       return results.hits.map((item: { document: ApiTokenDocument }) => {
         return {
           address: item.document.address,
-          name: item.document.name,
+          name: item.document.symbol, //item.document.name, todo: sync with API object and revert
           symbol: item.document.symbol,
           decimals: item.document.decimals,
           logo_url: item.document.logoURI
