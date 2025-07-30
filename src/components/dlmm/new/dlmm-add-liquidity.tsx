@@ -389,7 +389,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountX}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountX })}
-              onChange={v => onChangeBaseAmount(new Decimal(v.target.value || 0))}
+              onChangeValue={v => onChangeBaseAmount(new Decimal(v || 1))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">
@@ -425,7 +425,7 @@ export function DlmmAddLiquidity({ pair }: AddLiquidityProps) {
             <InputNumeric
               value={amounts.amountY}
               className={cn('h-11 ps-10 text-right', { 'border-red-400': !!errors.amountY })}
-              onChange={v => onChangeQuoteAmount(new Decimal(v.target.value || 0))}
+              onChangeValue={v => onChangeQuoteAmount(new Decimal(v || 1))}
               disabled={formState.submitting}
             />
             <div className="mt-1 flex justify-between">

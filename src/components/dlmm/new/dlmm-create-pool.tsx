@@ -149,9 +149,10 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
     setErrors({ ...omit(errors, ['quote']) })
   }
 
-  const onChangeInitialPrice = (v: string) => {
+  const onChangeInitialPrice = (v: number | undefined) => {
     setErrors({ ...omit(errors, ['initialPrice']) })
-    setInitialPrice(parseFloat(v) || 1)
+    const val = new Decimal(v || 1)
+    setInitialPrice(val.toNumber())
   }
 
   const onChangeBaseFee = (f: number) => {
@@ -268,7 +269,7 @@ export function DlmmCreatePool({ onCreate, onClickNext, fetchingPair }: DlmmCrea
           <InputNumeric
             value={initialPrice}
             placeholder="1"
-            onChange={v => onChangeInitialPrice(v.target.value)}
+            onChangeValue={v => onChangeInitialPrice(v)}
             disabled={formState.submitting}
             className={cn('h-11', { 'border-red-400': !!errors.initialPrice })}
             required
